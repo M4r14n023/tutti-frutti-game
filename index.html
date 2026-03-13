@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutti Frutti con Lau ✍️</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Tutti Frutti Online</h1>
+        <div id="score-board">
+            <span id="label-p1">Tú:</span> <b id="score-p1">0</b> | 
+            <span id="label-p2">Lau:</span> <b id="score-p2">0</b>
+        </div>
+    </header>
+
+    <main id="game-container">
+        <section id="start-screen">
+            <div class="welcome-card">
+                <h2>🎮 Configurar Partida</h2>
+                <div class="settings-group">
+                    <input type="text" id="name-p1" value="Tú">
+                    <input type="text" id="name-p2" value="Lau">
+                </div>
+                <div class="settings-group">
+                    <label>Mazo:</label>
+                    <select id="mazo-select">
+                        <option value="clasico">Clásico</option>
+                        <option value="viajero">Viajero</option>
+                        <option value="custom">Mazo Personalizado</option>
+                    </select>
+                </div>
+                <div id="custom-mazo-area" class="hidden">
+                    <textarea id="custom-categories" placeholder="Cat1, Cat2, Cat3..."></textarea>
+                </div>
+                <div class="settings-group">
+                    <label>Meta:</label>
+                    <div class="radio-group">
+                        <input type="radio" name="goal" value="100"> 100
+                        <input type="radio" name="goal" value="500" checked> 500
+                    </div>
+                </div>
+                <button id="btn-ready" class="btn-success">¡LISTOS!</button>
+            </div>
+        </section>
+
+        <section id="setup-area" class="hidden">
+            <button id="btn-start">Elegir Letra al Azar</button>
+            <h2 id="current-letter">?</h2>
+        </section>
+
+        <section id="play-area" class="hidden">
+            <div id="category-card">
+                <h3 id="category-name">Categoría</h3>
+                <input type="text" id="user-input" autocomplete="off">
+                <div class="controls">
+                    <button id="btn-skip">Saltar</button>
+                    <button id="btn-next">Siguiente</button>
+                </div>
+            </div>
+            <button id="btn-stop" class="danger">¡TUTTI FRUTTI!</button>
+            <button id="btn-force-end" class="secondary">Forzar Final</button>
+        </section>
+
+        <section id="results-area" class="hidden">
+            <div id="loader" class="hidden">
+                <div class="spinner"></div>
+                <p>El árbitro está revisando el diccionario...</p>
+            </div>
+            <div id="results-content">
+                <h2>Resultados de la Ronda</h2>
+                <table id="results-table">
+                    <thead>
+                        <tr><th>Categoría</th><th>Tú</th><th>Lau</th><th>Pts</th><th>VAR</th></tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+                <button id="btn-confirm-round" class="btn-success">Confirmar y Sumar</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-debate" class="hidden">
+        <div class="modal-content">
+            <h2 id="debate-title">⚖️ Tribunal de Palabras</h2>
+            <p>Palabra en disputa: <b id="disputed-word">---</b></p>
+            <textarea id="argumento-debate" placeholder="Argumento para convencer a Lau..."></textarea>
+            <div class="controls">
+                <button onclick="cerrarDebate('valida')" class="btn-success">Es Válida</button>
+                <button onclick="cerrarDebate('invalida')" class="danger">Es Inventada</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/mazos.js"></script>
+    <script src="js/dictionary.js"></script>
+    <script src="js/gameLogic.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
