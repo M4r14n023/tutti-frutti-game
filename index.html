@@ -3,52 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutti Frutti con Lau ✍️</title>
+    <title>Tutti Frutti Online ✍️</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>Tutti Frutti Online</h1>
-        <div id="score-board">
+        <h1>Tutti Frutti</h1>
+        <div id="score-board" class="hidden">
             <span id="label-p1">Tú:</span> <b id="score-p1">0</b> | 
-            <span id="label-p2">Lau:</span> <b id="score-p2">0</b>
+            <span id="label-p2">Rival:</span> <b id="score-p2">0</b>
         </div>
     </header>
 
     <main id="game-container">
+        
         <section id="start-screen">
             <div class="welcome-card">
-                <h2>🎮 Configurar Partida</h2>
+                <h2>🎮 Bienvenido</h2>
+                
                 <div class="settings-group">
-                    <input type="text" id="name-p1" value="Tú">
-                    <input type="text" id="name-p2" value="Lau">
+                    <label>Tu Nombre:</label>
+                    <input type="text" id="my-name" placeholder="Ej: Mariano" autocomplete="off">
                 </div>
+
+                <div class="lobby-controls">
+                    <button id="btn-create-room" class="btn-success">Crear Nueva Partida</button>
+                    <p>— O únete a una existente —</p>
+                    <div id="rooms-list" class="rooms-container">
+                        <p class="empty-msg">Buscando partidas abiertas...</p>
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="waiting-screen" class="hidden">
+            <div class="welcome-card">
+                <h2>Sala Creada: <span id="room-code-display" style="color:var(--primary)">---</span></h2>
+                <div class="spinner"></div>
+                <p>Esperando que alguien se una...</p>
+                <p><small>(La sala se cerrará en 3 minutos)</small></p>
+                <button id="btn-cancel-room" class="danger">Cancelar</button>
+            </div>
+        </section>
+
+        <section id="setup-area" class="hidden">
+            <div id="host-settings">
+                <h3>Configuración de Ronda</h3>
                 <div class="settings-group">
                     <label>Mazo:</label>
                     <select id="mazo-select">
                         <option value="clasico">Clásico</option>
                         <option value="viajero">Viajero</option>
-                        <option value="custom">Mazo Personalizado</option>
+                        <option value="custom">Personalizado</option>
                     </select>
                 </div>
                 <div id="custom-mazo-area" class="hidden">
                     <textarea id="custom-categories" placeholder="Cat1, Cat2, Cat3..."></textarea>
                 </div>
                 <div class="settings-group">
-                    <label>Meta:</label>
+                    <label>Meta de puntos:</label>
                     <div class="radio-group">
                         <input type="radio" name="goal" value="100"> 100
                         <input type="radio" name="goal" value="500" checked> 500
                     </div>
                 </div>
-                <button id="btn-ready" class="btn-success">¡LISTOS!</button>
+                <button id="btn-start" class="btn-success">Elegir Letra y Empezar</button>
             </div>
-        </section>
+            
+            <div id="guest-waiting" class="hidden">
+                <div class="spinner"></div>
+                <p>Esperando a que <b id="host-name-display">el Host</b> elija la letra...</p>
+            </div>
 
-        <section id="setup-area" class="hidden">
-            <button id="btn-start">Elegir Letra al Azar</button>
-            <h2 id="current-letter">?</h2>
+            <h2 id="current-letter" class="hidden">?</h2>
         </section>
 
         <section id="play-area" class="hidden">
@@ -73,7 +101,7 @@
                 <h2>Resultados de la Ronda</h2>
                 <table id="results-table">
                     <thead>
-                        <tr><th>Categoría</th><th>Tú</th><th>Lau</th><th>Pts</th><th>VAR</th></tr>
+                        <tr><th>Categoría</th><th id="th-p1">Tú</th><th id="th-p2">Rival</th><th>Pts</th><th>VAR</th></tr>
                     </thead>
                     <tbody id="results-body"></tbody>
                 </table>
@@ -84,9 +112,9 @@
 
     <div id="modal-debate" class="hidden">
         <div class="modal-content">
-            <h2 id="debate-title">⚖️ Tribunal de Palabras</h2>
+            <h2 id="debate-title">⚖️ Tribunal</h2>
             <p>Palabra en disputa: <b id="disputed-word">---</b></p>
-            <textarea id="argumento-debate" placeholder="Argumento para convencer a Lau..."></textarea>
+            <textarea id="argumento-debate" placeholder="Justifica tu respuesta..."></textarea>
             <div class="controls">
                 <button onclick="cerrarDebate('valida')" class="btn-success">Es Válida</button>
                 <button onclick="cerrarDebate('invalida')" class="danger">Es Inventada</button>
@@ -94,31 +122,25 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyASMqVmei3fLw04imF6BD53YeogyjhP1xo",
+            authDomain: "tutti-frutti-7997e.firebaseapp.com",
+            projectId: "tutti-frutti-7997e",
+            storageBucket: "tutti-frutti-7997e.firebasestorage.app",
+            databaseURL: "https://tutti-frutti-7997e-default-rtdb.firebaseio.com",
+            messagingSenderId: "434522659140",
+            appId: "1:434522659140:web:dafab860b02e1a21e9df11"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+    </script>
 
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
-
-<script>
-  // Configuración de tu proyecto
-  const firebaseConfig = {
-    apiKey: "AIzaSyASMqVmei3fLw04imF6BD53YeogyjhP1xo",
-    authDomain: "tutti-frutti-7997e.firebaseapp.com",
-    projectId: "tutti-frutti-7997e",
-    storageBucket: "tutti-frutti-7997e.firebasestorage.app",
-    databaseURL: "https://tutti-frutti-7997e-default-rtdb.firebaseio.com", // Asegúrate de que este sea el link de tu Realtime Database
-    messagingSenderId: "434522659140",
-    appId: "1:434522659140:web:dafab860b02e1a21e9df11"
-  };
-
-  // Inicializar Firebase
-  firebase.initializeApp(firebaseConfig);
-  // Esta es la variable mágica que usaremos en main.js
-  const db = firebase.database();
-</script>
-
-<script src="js/mazos.js"></script>
-<script src="js/dictionary.js"></script>
-<script src="js/gameLogic.js"></script>
-<script src="js/main.js"></script>
+    <script src="js/mazos.js"></script>
+    <script src="js/dictionary.js"></script>
+    <script src="js/gameLogic.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
