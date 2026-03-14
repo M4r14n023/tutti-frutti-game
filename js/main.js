@@ -17,21 +17,17 @@ function showScreen(screenId) {
 }
 
 // --- 2. SISTEMA DE SALAS (LOBBY) ---
-
-// Buscar salas activas (menos de 3 minutos de antigüedad y estado "esperando")
 db.ref('salas').on('value', (snapshot) => {
-    // Si ya estoy en una sala, ignoro esta lista
     if (roomCode) return; 
 
     const salas = snapshot.val() || {};
     const listaUI = document.getElementById('rooms-list');
-    listaUI.innerHTML = ""; // Limpiar lista
+    listaUI.innerHTML = ""; 
     
     let salasDisponibles = 0;
     const ahora = Date.now();
 
     for (const [codigo, data] of Object.entries(salas)) {
-        // Verificar que esté esperando y tenga menos de 3 minutos (180,000 ms)
         if (data.estado === "esperando" && (ahora - data.timestamp < 180000)) {
             salasDisponibles++;
             const btn = document.createElement('button');
@@ -49,14 +45,12 @@ db.ref('salas').on('value', (snapshot) => {
     }
 });
 
-// Crear Sala
 document.getElementById('btn-create-room').addEventListener('click', () => {
     const inputName = document.getElementById('my-name').value.trim();
     if (!inputName) { alert("¡Pon tu nombre primero!"); return; }
 
     myName = inputName;
     myRole = 'host';
-    // Generar código aleatorio de 4 letras/números
     roomCode = Math.random().toString(36).substring(2, 6).toUpperCase(); 
 
     db.ref(`salas/${roomCode}`).set({
@@ -69,25 +63,21 @@ document.getElementById('btn-create-room').addEventListener('click', () => {
     document.getElementById('room-code-display').innerText = roomCode;
     showScreen('waiting-screen');
 
-    // El Host se queda escuchando hasta que alguien entre a la sala
     db.ref(`salas/${roomCode}/guestName`).on('value', (snap) => {
         if (snap.val()) {
             rivalName = snap.val();
-            // ¡Alguien entró! Desactivar este "oído" y arrancar el juego
             db.ref(`salas/${roomCode}/guestName`).off();
             iniciarSetup();
         }
     });
 });
 
-// Cancelar Sala
 document.getElementById('btn-cancel-room').addEventListener('click', () => {
     if (roomCode) db.ref(`salas/${roomCode}`).remove();
     roomCode = null;
     showScreen('start-screen');
 });
 
-// Unirse a Sala
 function unirseSala(codigo, hostNombre) {
     const inputName = document.getElementById('my-name').value.trim();
     if (!inputName) { alert("¡Pon tu nombre primero!"); return; }
@@ -97,7 +87,6 @@ function unirseSala(codigo, hostNombre) {
     roomCode = codigo;
     rivalName = hostNombre;
 
-    // Actualizar la sala avisando que ya entré
     db.ref(`salas/${roomCode}`).update({
         guestName: myName,
         estado: "configurando"
@@ -113,7 +102,6 @@ function iniciarSetup() {
     document.getElementById('label-p1').innerText = `${myName}:`;
     document.getElementById('label-p2').innerText = `${rivalName}:`;
     
-    // Nombres en la tabla de resultados
     document.getElementById('th-p1').innerText = myName;
     document.getElementById('th-p2').innerText = rivalName;
 
@@ -126,20 +114,15 @@ function iniciarSetup() {
         document.getElementById('host-name-display').innerText = rivalName;
     }
 
-    // Empezamos a escuchar los movimientos de la partida
     escucharEstadoJuego();
 }
 
-// Mostrar opciones custom de mazo (Solo afecta UI del Host)
 document.getElementById('mazo-select').addEventListener('change', (e) => {
     document.getElementById('custom-mazo-area').classList.toggle('hidden', e.target.value !== 'custom');
 });
 
 // --- 4. INICIO DE RONDA Y SINCRONIZACIÓN ---
-
-// Botón Start (SOLO EL HOST PUEDE TOCARLO)
 document.getElementById('btn-start').addEventListener('click', () => {
-    // 1. Host configura el mazo localmente
     const selectMazo = document.getElementById('mazo-select').value;
     if (selectMazo === 'custom') {
         const customText = document.getElementById('custom-categories').value;
@@ -152,13 +135,12 @@ document.getElementById('btn-start').addEventListener('click', () => {
     }
     puntajeMeta = parseInt(document.querySelector('input[name="goal"]:checked').value);
 
+    // FIX BUG 1: Solo generamos la letra y la subimos, no modificamos la UI local aún
     const nuevaLetra = elegirLetraAzar();
     
-    // 2. Subir configuración a Firebase para que la descargue el Guest
     db.ref(`salas/${roomCode}/config`).set({ mazo: mazoActual, meta: puntajeMeta });
     db.ref(`salas/${roomCode}/respuestas`).remove(); 
     
-    // 3. Avisar que arranca el juego
     db.ref(`salas/${roomCode}/actual`).set({
         letra: nuevaLetra,
         estado: 'jugando',
@@ -166,20 +148,20 @@ document.getElementById('btn-start').addEventListener('click', () => {
     });
 });
 
-// EL "OÍDO" PRINCIPAL DEL JUEGO (Escuchan ambos)
 function escucharEstadoJuego() {
     db.ref(`salas/${roomCode}/actual`).on('value', (snap) => {
         const data = snap.val();
         if (!data) return;
 
-        // A) Arranca la ronda
-        if (data.estado === 'jugando' && letraActual !== data.letra) {
+        // FIX BUG 1: Chequeamos por el estado de la pantalla en vez de la letra
+        const noEstoyJugandoAun = document.getElementById('play-area').classList.contains('hidden');
+
+        if (data.estado === 'jugando' && noEstoyJugandoAun) {
             letraActual = data.letra;
             document.getElementById('current-letter').innerText = letraActual;
             document.getElementById('current-letter').classList.remove('hidden');
 
             if (myRole === 'guest') {
-                // El Guest descarga las reglas que puso el Host
                 db.ref(`salas/${roomCode}/config`).once('value', (configSnap) => {
                     const config = configSnap.val();
                     mazoActual = config.mazo;
@@ -190,7 +172,6 @@ function escucharEstadoJuego() {
                 prepararRondaLocal();
             }
         } 
-        // B) Alguien tocó Stop
         else if (data.estado === 'stop') {
             finalizarYMostrarVAR();
         }
@@ -255,16 +236,21 @@ async function finalizarYMostrarVAR() {
 
     const rivalRole = myRole === 'host' ? 'guest' : 'host';
 
-    // Subir mis respuestas
+    // FIX BUG 2: Truco para que Firebase registre la subida aunque no haya palabras escritas
+    respuestasJugador["_completado"] = true; 
+
     await db.ref(`salas/${roomCode}/respuestas/${myRole}`).set(respuestasJugador);
 
-    // Escuchar las del rival
     const respuestasRef = db.ref(`salas/${roomCode}/respuestas/${rivalRole}`);
     respuestasRef.on('value', async (snapshot) => {
         const respuestasRival = snapshot.val();
-        if (respuestasRival) {
-            respuestasRef.off(); // Apagar oído para que no se repita
+        
+        if (respuestasRival && respuestasRival._completado) {
+            respuestasRef.off(); 
+            
+            // Pasamos al diccionario, que al recorrer el mazo ignorará "_completado"
             await mostrarRevision(respuestasJugador, respuestasRival);
+            
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('results-content').classList.remove('hidden');
         }
@@ -281,17 +267,14 @@ document.getElementById('btn-confirm-round').addEventListener('click', () => {
         totalRonda += pts;
     });
 
-    scoreP1 += totalRonda; // scoreP1 de gameLogic ahora me representa a "mí"
+    scoreP1 += totalRonda; 
     document.getElementById('score-p1').innerText = scoreP1;
-
-    // TODO: En el futuro, podemos cruzar scores por Firebase para ver el de Lau en tiempo real
-    // document.getElementById('score-p2').innerText = scoreP2; 
 
     if (scoreP1 >= puntajeMeta) {
         confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
         setTimeout(() => {
-            alert(`¡PARTIDA TERMINADA! ¡Ganaste!`);
-            if(myRole === 'host') db.ref(`salas/${roomCode}`).remove(); // Host limpia
+            alert(`¡PARTIDA TERMINADA! Has alcanzado la meta.`);
+            if(myRole === 'host') db.ref(`salas/${roomCode}`).remove(); 
             location.reload();
         }, 1500);
     } else {
