@@ -94,9 +94,31 @@
         </div>
     </div>
 
-    <script src="js/mazos.js"></script>
-    <script src="js/dictionary.js"></script>
-    <script src="js/gameLogic.js"></script>
-    <script src="js/main.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+<script>
+  // Configuración de tu proyecto
+  const firebaseConfig = {
+    apiKey: "AIzaSyASMqVmei3fLw04imF6BD53YeogyjhP1xo",
+    authDomain: "tutti-frutti-7997e.firebaseapp.com",
+    projectId: "tutti-frutti-7997e",
+    storageBucket: "tutti-frutti-7997e.firebasestorage.app",
+    databaseURL: "https://tutti-frutti-7997e-default-rtdb.firebaseio.com", // Asegúrate de que este sea el link de tu Realtime Database
+    messagingSenderId: "434522659140",
+    appId: "1:434522659140:web:dafab860b02e1a21e9df11"
+  };
+
+  // Inicializar Firebase
+  firebase.initializeApp(firebaseConfig);
+  // Esta es la variable mágica que usaremos en main.js
+  const db = firebase.database();
+</script>
+
+<script src="js/mazos.js"></script>
+<script src="js/dictionary.js"></script>
+<script src="js/gameLogic.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
