@@ -148,11 +148,9 @@ function escucharEstadoJuego() {
 
 function iniciarAnimacionCountdown(letra) {
     sumarPuntosSeguros(); 
-    yoGriteStop = false; // Reseteamos bandera de stop
+    yoGriteStop = false; 
 
-    document.getElementById('score-board').classList.remove('hidden');
-    document.getElementById('label-p1').innerText = `${myName}:`;
-    document.getElementById('label-p2').innerText = `${rivalName}:`;
+    // Solo actualizamos los nombres en la tabla del VAR, ignoramos el header
     document.getElementById('th-p1').innerText = myName;
     document.getElementById('th-p2').innerText = rivalName;
 
@@ -292,8 +290,8 @@ function sumarPuntosSeguros() {
         totalRonda += pts;
     });
 
-    scoreP1 += totalRonda; 
-    document.getElementById('score-p1').innerText = scoreP1;
+    scoreP1 += totalRonda; // Seguimos sumando matemáticamente por detrás
+    // Borramos la línea que intentaba mostrarlo en la pantalla
     puntosSumadosEnEstaRonda = true;
 }
 

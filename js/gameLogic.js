@@ -8,7 +8,7 @@ let indiceCategoriaActual = 0;
 let respuestasJugador = {};
 let scoreP1 = 0; // Tu puntuación acumulada local
 
-const abecedario = "ABCDEFGHIJKLMNÑOPQRSTUVWYZ".split("");
+const abecedario = "ABCDEFGHIJKLMNOPQRSTUVWYZ".split("");
 
 // 1. Función para elegir letra al azar
 function elegirLetraAzar() {
