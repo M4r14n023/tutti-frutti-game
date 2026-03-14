@@ -45,12 +45,27 @@
 
         <section id="waiting-screen" class="hidden">
             <div class="welcome-card">
-                <h2>Sala Creada: <span id="room-code-display" style="color:var(--primary)">---</span></h2>
-                <div class="spinner"></div>
-                <p>Esperando a tu rival...</p>
-                <button id="btn-cancel-room" class="danger" style="margin-top: 20px;">Cancelar</button>
+                <h2>Sala: <span id="room-code-display" style="color:var(--primary)">---</span></h2>
+                <div class="spinner" id="waiting-spinner"></div>
+                <p id="waiting-msg">Esperando a tu rival...</p>
+                <button id="btn-start-game" class="btn-success hidden" style="margin-top: 15px; font-size: 1.2rem;">¡Comenzar Desafío!</button>
+                <button id="btn-cancel-room" class="danger" style="margin-top: 10px;">Cancelar</button>
             </div>
         </section>
+
+        <div id="modal-tablas" class="hidden">
+            <div class="modal-content">
+                <h2>🤝 Propuesta de Tablas</h2>
+                <p id="tablas-msg">Esperando respuesta...</p>
+                <div id="tablas-controls-proposer" class="controls hidden">
+                    <button onclick="cancelarTablas()" class="danger">Cancelar Propuesta</button>
+                </div>
+                <div id="tablas-controls-receiver" class="controls hidden">
+                    <button onclick="aceptarTablas()" class="btn-success">Aceptar Tablas</button>
+                    <button onclick="rechazarTablas()" class="secondary">Rechazar (Seguir Jugando)</button>
+                </div>
+            </div>
+        </div>
 
         <section id="countdown-screen" class="hidden">
             <h2 id="challenge-msg">¡Desafío aceptado!</h2>
@@ -70,9 +85,9 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-                <button id="btn-stop" class="danger" style="flex: 2;">¡TUTTI FRUTTI!</button>
-                <button id="btn-force-end" class="secondary" style="flex: 1;">Me Rindo</button>
-            </div>
+    <button id="btn-stop" class="danger" style="flex: 2;">¡TUTTI FRUTTI!</button>
+    <button id="btn-tablas" class="secondary" style="flex: 1;">🤝 Tablas</button>
+</div>
         </section>
 
         <section id="results-area" class="hidden">

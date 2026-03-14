@@ -5,7 +5,7 @@ let myRole = null;
 let myName = "";
 let rivalName = "";
 let puntosSumadosEnEstaRonda = false; 
-let yoGriteStop = false; // Para saber quién cortó el juego
+let yoGriteStop = false; 
 
 // --- 1. GESTIÓN DE PANTALLAS ---
 function showScreen(screenId) {
@@ -47,12 +47,11 @@ document.getElementById('mazo-select').addEventListener('change', (e) => {
     document.getElementById('custom-mazo-area').classList.toggle('hidden', e.target.value !== 'custom');
 });
 
-// Función para limpiar caracteres prohibidos en Firebase
 function limpiarMazo(mazoArray) {
     return mazoArray.map(cat => cat.replace(/[.#$/\[\]]/g, '-'));
 }
 
-// CREAR SALA (HOST)
+// CREAR SALA (HOST) - ARRANQUE AUTOMÁTICO AL UNIRSE
 document.getElementById('btn-create-room').addEventListener('click', () => {
     myName = document.getElementById('my-name').value.trim();
     if (!myName) { alert("Pon tu nombre primero."); return; }
@@ -63,7 +62,6 @@ document.getElementById('btn-create-room').addEventListener('click', () => {
     const selectMazo = document.getElementById('mazo-select').value;
     let mazoElegido = selectMazo === 'custom' ? document.getElementById('custom-categories').value.split(',').map(c => c.trim()) : mazosPredefinidos[selectMazo];
     
-    // FIX BUG 1: Limpiamos los nombres de las categorías antes de usarlos
     mazoActual = limpiarMazo(mazoElegido);
 
     db.ref(`salas/${roomCode}`).set({
@@ -81,7 +79,7 @@ document.getElementById('btn-create-room').addEventListener('click', () => {
         if (snap.val()) {
             rivalName = snap.val();
             db.ref(`salas/${roomCode}/guestName`).off();
-            prepararYDispararCountdown(); 
+            prepararYDispararCountdown(); // Arranca solito
         }
     });
 });
@@ -103,7 +101,7 @@ function unirseSala(codigo, hostNombre) {
 
     db.ref(`salas/${roomCode}`).update({ guestName: myName });
     db.ref(`salas/${roomCode}/config`).once('value', (snap) => {
-        mazoActual = snap.val().mazo; // El mazo ya viene limpio del Host
+        mazoActual = snap.val().mazo; 
     });
 
     escucharEstadoJuego(); 
@@ -130,9 +128,30 @@ function escucharEstadoJuego() {
         if (!data) return;
 
         if (data.estado === 'countdown') {
+            document.getElementById('modal-tablas')?.classList.add('hidden'); 
             iniciarAnimacionCountdown(data.letra);
         } 
+        else if (data.estado === 'jugando') {
+            // Si alguien rechaza las tablas o las cancela, se oculta el modal
+            document.getElementById('modal-tablas')?.classList.add('hidden');
+        }
+        else if (data.estado === 'tablas') {
+            // LÓGICA DE TABLAS (Mostrar Modal)
+            const modal = document.getElementById('modal-tablas');
+            if(modal) modal.classList.remove('hidden');
+            
+            if (data.propuestoPor === myRole) {
+                document.getElementById('tablas-msg').innerText = `Esperando a que ${rivalName} acepte las tablas...`;
+                document.getElementById('tablas-controls-proposer').classList.remove('hidden');
+                document.getElementById('tablas-controls-receiver').classList.add('hidden');
+            } else {
+                document.getElementById('tablas-msg').innerText = `¡${rivalName} propone dejar esta letra en Tablas! ¿Aceptas?`;
+                document.getElementById('tablas-controls-proposer').classList.add('hidden');
+                document.getElementById('tablas-controls-receiver').classList.remove('hidden');
+            }
+        }
         else if (data.estado === 'stop') {
+            document.getElementById('modal-tablas')?.classList.add('hidden');
             if (document.getElementById('results-area').classList.contains('hidden')) {
                 manejarCorteDeRonda();
             }
@@ -150,7 +169,6 @@ function iniciarAnimacionCountdown(letra) {
     sumarPuntosSeguros(); 
     yoGriteStop = false; 
 
-    // Solo actualizamos los nombres en la tabla del VAR, ignoramos el header
     document.getElementById('th-p1').innerText = myName;
     document.getElementById('th-p2').innerText = rivalName;
 
@@ -188,7 +206,6 @@ function prepararRondaLocal() {
     indiceCategoriaActual = 0;
     respuestasJugador = {};
     
-    // Habilitar botones por si venimos de un tiempo de gracia previo
     document.getElementById('btn-next').disabled = false;
     document.getElementById('btn-skip').disabled = false;
     document.getElementById('user-input').style.borderColor = "#ddd";
@@ -204,11 +221,9 @@ function guardarRespuestaActual() {
     if (catNombre) {
         respuestasJugador[catNombre] = input.value.trim();
     }
-    // Ya no borramos el input a la fuerza aquí. De eso se encarga la interfaz.
 }
 
 function estanTodasCompletas() {
-    // Revisa si en cada categoría del mazo hay una palabra escrita
     for (let cat of mazoActual) {
         if (!respuestasJugador[cat] || respuestasJugador[cat].trim() === "") {
             return false;
@@ -218,7 +233,6 @@ function estanTodasCompletas() {
 }
 
 function irAProximaCategoriaVacia() {
-    // Busca de forma circular la próxima categoría que esté en blanco
     for (let i = 1; i <= mazoActual.length; i++) {
         let nextIndex = (indiceCategoriaActual + i) % mazoActual.length;
         let catNombre = mazoActual[nextIndex];
@@ -235,11 +249,9 @@ document.getElementById('btn-next').addEventListener('click', () => {
     guardarRespuestaActual();
     
     if (estanTodasCompletas()) {
-        // Si ya está todo lleno, "Siguiente" funciona como "Tutti Frutti"
         yoGriteStop = true;
         db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     } else {
-        // Si faltan, salta a la primera que encuentre vacía
         irAProximaCategoriaVacia();
     }
 });
@@ -254,8 +266,6 @@ function actualizarInterfazCategoria() {
     document.getElementById('category-name').innerText = catNombre;
     
     const input = document.getElementById('user-input');
-    // Si ya habías escrito algo en esta categoría (y pegaste la vuelta), te lo muestra.
-    // Si está vacía, la deja en blanco.
     input.value = respuestasJugador[catNombre] || ""; 
     input.focus();
 }
@@ -268,18 +278,8 @@ document.getElementById('btn-stop').addEventListener('click', () => {
         yoGriteStop = true; 
         db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     } else {
-        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar. Si no se te ocurre nada, usa el botón 'Me Rindo'.");
+        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar. Si se traban, ofreceles Tablas a tu rival.");
         actualizarInterfazCategoria(); 
-    }
-});
-
-// NUEVO: Botón de escape para las letras imposibles
-document.getElementById('btn-force-end').addEventListener('click', () => {
-    if (confirm("¿Están seguros de rendirse con esta letra? Las categorías vacías valdrán 0 puntos.")) {
-        guardarRespuestaActual();
-        yoGriteStop = true; // Fui yo el que cortó
-        // Le mandamos la señal a Firebase saltándonos la validación
-        db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     }
 });
 
@@ -325,7 +325,31 @@ async function finalizarYMostrarVAR() {
     });
 }
 
-// --- 6. SUMA DE PUNTOS Y CONTINUACIÓN ---
+// --- 6. TABLAS (EMPATE) ---
+document.getElementById('btn-tablas').addEventListener('click', () => {
+    guardarRespuestaActual(); 
+    db.ref(`salas/${roomCode}/actual`).update({
+        estado: 'tablas',
+        propuestoPor: myRole
+    });
+});
+
+// Nota: Estas 3 funciones deben llamarse desde el HTML (onclick="cancelarTablas()", etc.)
+window.cancelarTablas = function() {
+    db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
+};
+
+window.rechazarTablas = function() {
+    db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
+    db.ref(`salas/${roomCode}/actual/rechazo`).set(Date.now()); 
+};
+
+window.aceptarTablas = function() {
+    yoGriteStop = true; 
+    db.ref(`salas/${roomCode}/actual`).update({ estado: 'stop' });
+};
+
+// --- 7. SUMA DE PUNTOS Y FINALIZACIÓN ---
 function sumarPuntosSeguros() {
     if (puntosSumadosEnEstaRonda) return; 
     
@@ -336,8 +360,7 @@ function sumarPuntosSeguros() {
         totalRonda += pts;
     });
 
-    scoreP1 += totalRonda; // Seguimos sumando matemáticamente por detrás
-    // Borramos la línea que intentaba mostrarlo en la pantalla
+    scoreP1 += totalRonda; 
     puntosSumadosEnEstaRonda = true;
 }
 
@@ -346,45 +369,34 @@ document.getElementById('btn-next-round').addEventListener('click', () => {
     db.ref(`salas/${roomCode}/actual/estado`).set('solicitar_nueva'); 
 });
 
-// Botón de Suma Final
 document.getElementById('btn-end-game').addEventListener('click', () => {
     sumarPuntosSeguros();
-    
-    // Subo mi score final a la base de datos
     db.ref(`salas/${roomCode}/scores/${myRole}`).set(scoreP1).then(() => {
-        // Le aviso al rival que el juego terminó
         db.ref(`salas/${roomCode}/actual/estado`).set('finished');
     });
 });
 
-// La función que corona al ganador
 function mostrarSumaFinal() {
     sumarPuntosSeguros();
     showScreen('final-screen');
     
-    // Por las dudas, me aseguro de subir mi score si el botón lo apretó el rival
     db.ref(`salas/${roomCode}/scores/${myRole}`).set(scoreP1);
 
-    // Me quedo escuchando hasta que estén los dos puntajes en Firebase
     const scoresRef = db.ref(`salas/${roomCode}/scores`);
     scoresRef.on('value', (snap) => {
         const scores = snap.val();
         
-        // Si ya están los puntajes del host y del guest
         if (scores && scores.host !== undefined && scores.guest !== undefined) {
-            scoresRef.off(); // Apago el oído
+            scoresRef.off(); 
             
-            // Asigno quién es quién
             const miScoreFinal = myRole === 'host' ? scores.host : scores.guest;
             const rivalScoreFinal = myRole === 'host' ? scores.guest : scores.host;
             
-            // Muestro los nombres y puntajes en pantalla
             document.getElementById('label-final-p1').innerText = myName;
             document.getElementById('final-score-me').innerText = miScoreFinal;
             document.getElementById('label-final-p2').innerText = rivalName;
             document.getElementById('final-score-rival').innerText = rivalScoreFinal;
 
-            // Anuncio del Ganador
             const titulo = document.getElementById('winner-announcement');
             if (miScoreFinal > rivalScoreFinal) {
                 titulo.innerText = "🏆 ¡GANASTE!";
@@ -395,7 +407,6 @@ function mostrarSumaFinal() {
                 titulo.innerText = "🤝 ¡EMPATE ÉPICO!";
             }
 
-            // El Host limpia la sala para no dejar basura en Firebase
             if(myRole === 'host') {
                 setTimeout(() => db.ref(`salas/${roomCode}`).remove(), 5000);
             }
