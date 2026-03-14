@@ -201,43 +201,81 @@ function prepararRondaLocal() {
 function guardarRespuestaActual() {
     const input = document.getElementById('user-input');
     const catNombre = mazoActual[indiceCategoriaActual];
-    if (catNombre) respuestasJugador[catNombre] = input.value.trim();
-    input.value = "";
+    if (catNombre) {
+        respuestasJugador[catNombre] = input.value.trim();
+    }
+    // Ya no borramos el input a la fuerza aquí. De eso se encarga la interfaz.
+}
+
+function estanTodasCompletas() {
+    // Revisa si en cada categoría del mazo hay una palabra escrita
+    for (let cat of mazoActual) {
+        if (!respuestasJugador[cat] || respuestasJugador[cat].trim() === "") {
+            return false;
+        }
+    }
+    return true;
+}
+
+function irAProximaCategoriaVacia() {
+    // Busca de forma circular la próxima categoría que esté en blanco
+    for (let i = 1; i <= mazoActual.length; i++) {
+        let nextIndex = (indiceCategoriaActual + i) % mazoActual.length;
+        let catNombre = mazoActual[nextIndex];
+        
+        if (!respuestasJugador[catNombre] || respuestasJugador[catNombre].trim() === "") {
+            indiceCategoriaActual = nextIndex;
+            actualizarInterfazCategoria();
+            return;
+        }
+    }
 }
 
 document.getElementById('btn-next').addEventListener('click', () => {
     guardarRespuestaActual();
-    if (indiceCategoriaActual < mazoActual.length - 1) {
-        indiceCategoriaActual++;
-        actualizarInterfazCategoria();
+    
+    if (estanTodasCompletas()) {
+        // Si ya está todo lleno, "Siguiente" funciona como "Tutti Frutti"
+        yoGriteStop = true;
+        db.ref(`salas/${roomCode}/actual/estado`).set('stop');
+    } else {
+        // Si faltan, salta a la primera que encuentre vacía
+        irAProximaCategoriaVacia();
     }
 });
 
 document.getElementById('btn-skip').addEventListener('click', () => {
-    document.getElementById('user-input').value = ""; 
     guardarRespuestaActual();
-    if (indiceCategoriaActual < mazoActual.length - 1) {
-        indiceCategoriaActual++;
-        actualizarInterfazCategoria();
-    }
+    irAProximaCategoriaVacia();
 });
 
 function actualizarInterfazCategoria() {
-    document.getElementById('category-name').innerText = mazoActual[indiceCategoriaActual];
-    document.getElementById('user-input').focus();
+    const catNombre = mazoActual[indiceCategoriaActual];
+    document.getElementById('category-name').innerText = catNombre;
+    
+    const input = document.getElementById('user-input');
+    // Si ya habías escrito algo en esta categoría (y pegaste la vuelta), te lo muestra.
+    // Si está vacía, la deja en blanco.
+    input.value = respuestasJugador[catNombre] || ""; 
+    input.focus();
 }
 
 // --- 5. VAR, STOP Y TIEMPO DE GRACIA ---
 document.getElementById('btn-stop').addEventListener('click', () => {
-    yoGriteStop = true; // Fui yo
-    db.ref(`salas/${roomCode}/actual/estado`).set('stop');
+    guardarRespuestaActual(); // Guarda la última palabra que estabas escribiendo
+    
+    if (estanTodasCompletas()) {
+        yoGriteStop = true; 
+        db.ref(`salas/${roomCode}/actual/estado`).set('stop');
+    } else {
+        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar.");
+        actualizarInterfazCategoria(); // Te devuelve la caja de texto como estaba
+    }
 });
 
-// FIX BUG 2: La lógica del tiempo extra para el que va atrasado
 function manejarCorteDeRonda() {
     const inputActual = document.getElementById('user-input').value.trim();
     
-    // Si NO fui yo quien gritó stop, y tengo al menos 2 letras escritas
     if (!yoGriteStop && inputActual.length >= 2) {
         document.getElementById('category-name').innerText = "¡TIEMPO! 3 segundos...";
         document.getElementById('category-name').style.color = "red";
@@ -245,12 +283,10 @@ function manejarCorteDeRonda() {
         document.getElementById('btn-next').disabled = true;
         document.getElementById('btn-skip').disabled = true;
         
-        // Le damos 3 segundos y luego lo forzamos al VAR
         setTimeout(() => {
             finalizarYMostrarVAR();
         }, 3000);
     } else {
-        // Si fui yo quien gritó, o si tenía la caja vacía, corto de una
         finalizarYMostrarVAR();
     }
 }
