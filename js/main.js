@@ -135,17 +135,25 @@ document.getElementById('btn-start').addEventListener('click', () => {
     }
     puntajeMeta = parseInt(document.querySelector('input[name="goal"]:checked').value);
 
-    // FIX BUG 1: Solo generamos la letra y la subimos, no modificamos la UI local aún
+    // Generamos la letra
     const nuevaLetra = elegirLetraAzar();
     
+    // Subimos la config para el Guest
     db.ref(`salas/${roomCode}/config`).set({ mazo: mazoActual, meta: puntajeMeta });
     db.ref(`salas/${roomCode}/respuestas`).remove(); 
     
+    // Avisamos a Firebase que arranca la partida
     db.ref(`salas/${roomCode}/actual`).set({
         letra: nuevaLetra,
         estado: 'jugando',
         timestamp: Date.now()
     });
+
+    // FIX 1: El Host no espera a Firebase. Arranca localmente de inmediato.
+    letraActual = nuevaLetra;
+    document.getElementById('current-letter').innerText = letraActual;
+    document.getElementById('current-letter').classList.remove('hidden');
+    prepararRondaLocal();
 });
 
 function escucharEstadoJuego() {
@@ -153,27 +161,27 @@ function escucharEstadoJuego() {
         const data = snap.val();
         if (!data) return;
 
-        // FIX BUG 1: Chequeamos por el estado de la pantalla en vez de la letra
         const noEstoyJugandoAun = document.getElementById('play-area').classList.contains('hidden');
 
-        if (data.estado === 'jugando' && noEstoyJugandoAun) {
+        // Solo el Guest necesita sincronizarse aquí para arrancar
+        if (data.estado === 'jugando' && noEstoyJugandoAun && myRole === 'guest') {
             letraActual = data.letra;
             document.getElementById('current-letter').innerText = letraActual;
             document.getElementById('current-letter').classList.remove('hidden');
 
-            if (myRole === 'guest') {
-                db.ref(`salas/${roomCode}/config`).once('value', (configSnap) => {
-                    const config = configSnap.val();
-                    mazoActual = config.mazo;
-                    puntajeMeta = config.meta;
-                    prepararRondaLocal();
-                });
-            } else {
+            db.ref(`salas/${roomCode}/config`).once('value', (configSnap) => {
+                const config = configSnap.val();
+                mazoActual = config.mazo;
+                puntajeMeta = config.meta;
                 prepararRondaLocal();
-            }
+            });
         } 
+        // Si alguien toca el botón Stop
         else if (data.estado === 'stop') {
-            finalizarYMostrarVAR();
+            // Aseguramos que el VAR solo se ejecute una vez por ronda
+            if (document.getElementById('results-area').classList.contains('hidden')) {
+                finalizarYMostrarVAR();
+            }
         }
     });
 }
@@ -236,21 +244,34 @@ async function finalizarYMostrarVAR() {
 
     const rivalRole = myRole === 'host' ? 'guest' : 'host';
 
-    // FIX BUG 2: Truco para que Firebase registre la subida aunque no haya palabras escritas
-    respuestasJugador["_completado"] = true; 
+    // FIX 2: Envolvemos las respuestas en un "payload" para que Firebase no las borre si están vacías
+    const payload = {
+        completado: true,
+        data: respuestasJugador || {}
+    };
 
-    await db.ref(`salas/${roomCode}/respuestas/${myRole}`).set(respuestasJugador);
+    // Subo mis respuestas al servidor
+    await db.ref(`salas/${roomCode}/respuestas/${myRole}`).set(payload);
 
+    // Me quedo escuchando las del rival
     const respuestasRef = db.ref(`salas/${roomCode}/respuestas/${rivalRole}`);
     respuestasRef.on('value', async (snapshot) => {
-        const respuestasRival = snapshot.val();
+        const payloadRival = snapshot.val();
         
-        if (respuestasRival && respuestasRival._completado) {
-            respuestasRef.off(); 
+        // Si el rival ya subió su paquete completo
+        if (payloadRival && payloadRival.completado) {
+            respuestasRef.off(); // Apago el oído para no repetir el proceso
             
-            // Pasamos al diccionario, que al recorrer el mazo ignorará "_completado"
-            await mostrarRevision(respuestasJugador, respuestasRival);
+            const respuestasRival = payloadRival.data || {};
+
+            try {
+                // Evaluamos las respuestas
+                await mostrarRevision(respuestasJugador, respuestasRival);
+            } catch (error) {
+                console.error("Error procesando palabras:", error);
+            }
             
+            // Ocultamos el loader y mostramos los puntos
             document.getElementById('loader').classList.add('hidden');
             document.getElementById('results-content').classList.remove('hidden');
         }
