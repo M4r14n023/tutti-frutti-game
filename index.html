@@ -12,7 +12,7 @@
         <h1>Tutti Frutti</h1>
         <div id="score-board" class="hidden">
             <span id="label-p1">Tú:</span> <b id="score-p1">0</b> | 
-            <span id="label-p2">Rival:</span> <b id="score-p2">0</b>
+            <span id="label-p2">Rival:</span> <b id="score-p2">?</b>
         </div>
     </header>
 
@@ -21,10 +21,20 @@
         <section id="start-screen">
             <div class="welcome-card">
                 <h2>🎮 Bienvenido</h2>
-                
                 <div class="settings-group">
-                    <label>Tu Nombre:</label>
-                    <input type="text" id="my-name" placeholder="Ej: Mariano" autocomplete="off">
+                    <input type="text" id="my-name" placeholder="Tu Nombre (Ej: Lau)" autocomplete="off">
+                </div>
+
+                <div class="settings-group" style="margin-top: 15px;">
+                    <label style="font-size: 0.9rem; color: #7f8c8d;">Mazo (Si creas partida):</label>
+                    <select id="mazo-select">
+                        <option value="clasico">Clásico</option>
+                        <option value="viajero">Viajero</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                <div id="custom-mazo-area" class="hidden">
+                    <textarea id="custom-categories" placeholder="Nombres, Colores, Marcas..."></textarea>
                 </div>
 
                 <div class="lobby-controls">
@@ -32,7 +42,7 @@
                     <p>— O únete a una existente —</p>
                     <div id="rooms-list" class="rooms-container">
                         <p class="empty-msg">Buscando partidas abiertas...</p>
-                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -41,45 +51,20 @@
             <div class="welcome-card">
                 <h2>Sala Creada: <span id="room-code-display" style="color:var(--primary)">---</span></h2>
                 <div class="spinner"></div>
-                <p>Esperando que alguien se una...</p>
-                <p><small>(La sala se cerrará en 3 minutos)</small></p>
-                <button id="btn-cancel-room" class="danger">Cancelar</button>
+                <p>Esperando a tu rival...</p>
+                <button id="btn-cancel-room" class="danger" style="margin-top: 20px;">Cancelar</button>
             </div>
         </section>
 
-        <section id="setup-area" class="hidden">
-            <div id="host-settings">
-                <h3>Configuración de Ronda</h3>
-                <div class="settings-group">
-                    <label>Mazo:</label>
-                    <select id="mazo-select">
-                        <option value="clasico">Clásico</option>
-                        <option value="viajero">Viajero</option>
-                        <option value="custom">Personalizado</option>
-                    </select>
-                </div>
-                <div id="custom-mazo-area" class="hidden">
-                    <textarea id="custom-categories" placeholder="Cat1, Cat2, Cat3..."></textarea>
-                </div>
-                <div class="settings-group">
-                    <label>Meta de puntos:</label>
-                    <div class="radio-group">
-                        <input type="radio" name="goal" value="100"> 100
-                        <input type="radio" name="goal" value="500" checked> 500
-                    </div>
-                </div>
-                <button id="btn-start" class="btn-success">Elegir Letra y Empezar</button>
-            </div>
-            
-            <div id="guest-waiting" class="hidden">
-                <div class="spinner"></div>
-                <p>Esperando a que <b id="host-name-display">el Host</b> elija la letra...</p>
-            </div>
-
-            <h2 id="current-letter" class="hidden">?</h2>
+        <section id="countdown-screen" class="hidden">
+            <h2 id="challenge-msg">¡Desafío aceptado!</h2>
+            <div id="countdown-number" class="big-number">3</div>
+            <p>Prepárate para la letra...</p>
+            <h1 id="letra-revelada" class="hidden" style="font-size: 6rem; color: var(--primary);">A</h1>
         </section>
 
         <section id="play-area" class="hidden">
+            <h2 id="current-letter-display" style="font-size: 4rem; color: var(--primary); margin: 0 0 15px 0;">A</h2>
             <div id="category-card">
                 <h3 id="category-name">Categoría</h3>
                 <input type="text" id="user-input" autocomplete="off">
@@ -89,35 +74,45 @@
                 </div>
             </div>
             <button id="btn-stop" class="danger">¡TUTTI FRUTTI!</button>
-            <button id="btn-force-end" class="secondary">Forzar Final</button>
         </section>
 
         <section id="results-area" class="hidden">
             <div id="loader" class="hidden">
                 <div class="spinner"></div>
-                <p>El árbitro está revisando el diccionario...</p>
+                <p>El árbitro está leyendo las respuestas...</p>
             </div>
             <div id="results-content">
-                <h2>Resultados de la Ronda</h2>
+                <h2>El VAR de las Palabras</h2>
                 <table id="results-table">
                     <thead>
-                        <tr><th>Categoría</th><th id="th-p1">Tú</th><th id="th-p2">Rival</th><th>Pts</th><th>VAR</th></tr>
+                        <tr><th>Cat.</th><th id="th-p1">Tú</th><th id="th-p2">Rival</th><th>Pts</th><th>VAR</th></tr>
                     </thead>
                     <tbody id="results-body"></tbody>
                 </table>
-                <button id="btn-confirm-round" class="btn-success">Confirmar y Sumar</button>
+                
+                <div class="end-round-controls" style="margin-top: 25px; display: flex; gap: 10px; justify-content: center;">
+                    <button id="btn-next-round" class="btn-success">Siguiente Letra</button>
+                    <button id="btn-end-game" class="secondary">Suma Final</button>
+                </div>
             </div>
+        </section>
+
+        <section id="final-screen" class="hidden">
+            <h1 style="font-size: 3rem;">🏁 ¡Fin del Juego!</h1>
+            <h2>Tu puntaje total: <span id="final-score" style="color:var(--primary); font-size: 4rem;">0</span></h2>
+            <p>Revisa la pantalla de tu rival para ver quién ganó.</p>
+            <button onclick="location.reload()" class="btn-success" style="margin-top:20px;">Volver al Inicio</button>
         </section>
     </main>
 
     <div id="modal-debate" class="hidden">
         <div class="modal-content">
             <h2 id="debate-title">⚖️ Tribunal</h2>
-            <p>Palabra en disputa: <b id="disputed-word">---</b></p>
-            <textarea id="argumento-debate" placeholder="Justifica tu respuesta..."></textarea>
+            <p>Palabra: <b id="disputed-word">---</b></p>
+            <textarea id="argumento-debate" placeholder="Argumento..."></textarea>
             <div class="controls">
-                <button onclick="cerrarDebate('valida')" class="btn-success">Es Válida</button>
-                <button onclick="cerrarDebate('invalida')" class="danger">Es Inventada</button>
+                <button onclick="cerrarDebate('valida')" class="btn-success">Válida</button>
+                <button onclick="cerrarDebate('invalida')" class="danger">Inventada</button>
             </div>
         </div>
     </div>
