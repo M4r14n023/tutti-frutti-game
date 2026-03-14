@@ -302,14 +302,61 @@ document.getElementById('btn-next-round').addEventListener('click', () => {
     db.ref(`salas/${roomCode}/actual/estado`).set('solicitar_nueva'); 
 });
 
+// Botón de Suma Final
 document.getElementById('btn-end-game').addEventListener('click', () => {
-    db.ref(`salas/${roomCode}/actual/estado`).set('finished');
+    sumarPuntosSeguros();
+    
+    // Subo mi score final a la base de datos
+    db.ref(`salas/${roomCode}/scores/${myRole}`).set(scoreP1).then(() => {
+        // Le aviso al rival que el juego terminó
+        db.ref(`salas/${roomCode}/actual/estado`).set('finished');
+    });
 });
 
+// La función que corona al ganador
 function mostrarSumaFinal() {
     sumarPuntosSeguros();
     showScreen('final-screen');
-    document.getElementById('final-score').innerText = scoreP1;
-    confetti({ particleCount: 300, spread: 100, origin: { y: 0.6 } });
-    if(myRole === 'host') db.ref(`salas/${roomCode}`).remove();
+    
+    // Por las dudas, me aseguro de subir mi score si el botón lo apretó el rival
+    db.ref(`salas/${roomCode}/scores/${myRole}`).set(scoreP1);
+
+    // Me quedo escuchando hasta que estén los dos puntajes en Firebase
+    const scoresRef = db.ref(`salas/${roomCode}/scores`);
+    scoresRef.on('value', (snap) => {
+        const scores = snap.val();
+        
+        // Si ya están los puntajes del host y del guest
+        if (scores && scores.host !== undefined && scores.guest !== undefined) {
+            scoresRef.off(); // Apago el oído
+            
+            // Asigno quién es quién
+            const miScoreFinal = myRole === 'host' ? scores.host : scores.guest;
+            const rivalScoreFinal = myRole === 'host' ? scores.guest : scores.host;
+            
+            // Muestro los nombres y puntajes en pantalla
+            document.getElementById('label-final-p1').innerText = myName;
+            document.getElementById('final-score-me').innerText = miScoreFinal;
+            document.getElementById('label-final-p2').innerText = rivalName;
+            document.getElementById('final-score-rival').innerText = rivalScoreFinal;
+
+            // Anuncio del Ganador
+            const titulo = document.getElementById('winner-announcement');
+            if (miScoreFinal > rivalScoreFinal) {
+                titulo.innerText = "🏆 ¡GANASTE!";
+                confetti({ particleCount: 400, spread: 120, origin: { y: 0.6 } });
+            } else if (miScoreFinal < rivalScoreFinal) {
+                titulo.innerText = `😢 Ganó ${rivalName}`;
+            } else {
+                titulo.innerText = "🤝 ¡EMPATE ÉPICO!";
+            }
+
+            // El Host limpia la sala para no dejar basura en Firebase
+            if(myRole === 'host') {
+                setTimeout(() => db.ref(`salas/${roomCode}`).remove(), 5000);
+            }
+        } else {
+            document.getElementById('winner-announcement').innerText = "Esperando al rival...";
+        }
+    });
 }

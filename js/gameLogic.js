@@ -6,9 +6,7 @@ let letrasUsadas = [];
 let letraActual = "";
 let indiceCategoriaActual = 0;
 let respuestasJugador = {};
-let puntajeMeta = 500;
-let scoreP1 = 0;
-let scoreP2 = 0;
+let scoreP1 = 0; // Tu puntuación acumulada local
 
 const abecedario = "ABCDEFGHIJKLMNÑOPQRSTUVWYZ".split("");
 
@@ -33,7 +31,10 @@ function elegirLetraAzar() {
 function siguienteCategoria() {
     if (indiceCategoriaActual < mazoActual.length - 1) {
         indiceCategoriaActual++;
-        actualizarInterfazCategoria(); // Esta función vive en main.js
+        // Esta función vive en main.js
+        if (typeof actualizarInterfazCategoria === "function") {
+            actualizarInterfazCategoria(); 
+        }
     } else {
         alert("¡Llegaste a la última categoría! Puedes presionar TUTTI FRUTTI.");
     }
@@ -44,57 +45,30 @@ function saltarCategoria() {
     siguienteCategoria();
 }
 
-// 4. Lógica de Puntos con Validación de Letra inicial
+// 4. NUEVA LÓGICA: Reglas Oficiales 5 - 10 - 20 (Sistema de Honor)
 async function procesarPuntosFinales(p1Word, p2Word) {
     const w1 = p1Word.trim().toLowerCase();
     const w2 = p2Word.trim().toLowerCase();
+    const letra = letraActual.toLowerCase();
 
-    // Si no escribió nada
-    if (!w1) return 0; 
+    // Validamos si las palabras existen y si empiezan con la letra correcta
+    const v1 = w1 && w1[0] === letra;
+    const v2 = w2 && w2[0] === letra;
 
-    // VALIDACIÓN CRÍTICA: ¿Empieza con la letra correcta?
-    if (w1[0].toUpperCase() !== letraActual) {
-        console.log(`Palabra incorrecta: debe empezar con ${letraActual}`);
-        return -2; 
+    // 1. Si dejaste el espacio vacío o te equivocaste de letra (Trampa/Error)
+    if (!v1) {
+        return (w1 === "") ? 0 : -2; // 0 si está vacío, -2 si arranca con otra letra
     }
 
-    // Validación Ortográfica Automática (llamando a dictionary.js)
-    const existe = await validarPalabraAutomatica(w1);
+    // 2. Si TU palabra es válida, evaluamos qué hizo el rival:
+    if (!v2) {
+        return 20; // El rival la dejó vacía o se equivocó de letra
+    }
     
-    if (existe === false) {
-        console.log("Error ortográfico detectado: -2 puntos");
-        return -2; 
-    }
-
-    // Comparación lógica de puntos
+    // 3. Ambos pusieron palabras válidas con la letra correcta
     if (w1 === w2) {
-        return 5;  // Iguales
-    } else if (w2 === "") {
-        return 20; // Solo P1 puso palabra
-    } else {
-        return 10; // Diferentes y válidas
+        return 5;  // Ambos pusieron exactamente la misma palabra
     }
-}
-
-// 5. Control de Ganador
-function verificarGanador() {
-    if (scoreP1 >= puntajeMeta || scoreP2 >= puntajeMeta) {
-        const name1 = document.getElementById('name-p1').value || "Tú";
-        const name2 = document.getElementById('name-p2').value || "Lau";
-        const ganador = scoreP1 >= puntajeMeta ? name1 : name2;
-        
-        alert(`¡PARTIDA TERMINADA!\n${ganador} ha alcanzado el objetivo de ${puntajeMeta} puntos.`);
-        reiniciarJuegoCompleto();
-        return true;
-    }
-    return false;
-}
-
-function reiniciarJuegoCompleto() {
-    scoreP1 = 0;
-    scoreP2 = 0;
-    letrasUsadas = [];
-    document.getElementById('score-p1').innerText = "0";
-    document.getElementById('score-p2').innerText = "0";
-    location.reload(); // Recarga para volver a la pantalla de inicio
+    
+    return 10; // Ambos pusieron palabras distintas y válidas
 }
