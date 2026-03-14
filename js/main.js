@@ -262,14 +262,24 @@ function actualizarInterfazCategoria() {
 
 // --- 5. VAR, STOP Y TIEMPO DE GRACIA ---
 document.getElementById('btn-stop').addEventListener('click', () => {
-    guardarRespuestaActual(); // Guarda la última palabra que estabas escribiendo
+    guardarRespuestaActual(); 
     
     if (estanTodasCompletas()) {
         yoGriteStop = true; 
         db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     } else {
-        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar.");
-        actualizarInterfazCategoria(); // Te devuelve la caja de texto como estaba
+        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar. Si no se te ocurre nada, usa el botón 'Me Rindo'.");
+        actualizarInterfazCategoria(); 
+    }
+});
+
+// NUEVO: Botón de escape para las letras imposibles
+document.getElementById('btn-force-end').addEventListener('click', () => {
+    if (confirm("¿Están seguros de rendirse con esta letra? Las categorías vacías valdrán 0 puntos.")) {
+        guardarRespuestaActual();
+        yoGriteStop = true; // Fui yo el que cortó
+        // Le mandamos la señal a Firebase saltándonos la validación
+        db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     }
 });
 
