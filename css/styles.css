@@ -18,6 +18,11 @@ body {
     align-items: center;
     margin: 0;
     padding: 20px;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
 .hidden { display: none !important; }
@@ -46,6 +51,8 @@ header {
     border-radius: 20px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
+    position: relative; /* Importante para que el absolute del lobby funcione bien */
+    overflow: hidden; /* Para contener las animaciones flotantes si usamos padding-box */
 }
 
 /* --- ELEMENTOS DE JUEGO --- */
@@ -65,8 +72,8 @@ header {
     background-color: #fafafa;
 }
 
-input[type="text"] {
-    width: 90%;
+input[type="text"], textarea {
+    width: 100%;
     padding: 12px;
     font-size: 1.1rem;
     border: 2px solid #ddd;
@@ -75,8 +82,13 @@ input[type="text"] {
     transition: border-color 0.3s;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus, textarea:focus {
     border-color: var(--primary);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
 }
 
 /* --- BOTONES --- */
@@ -87,7 +99,7 @@ button {
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
-    transition: transform 0.1s, opacity 0.2s, background-color 0.3s;
+    transition: transform 0.1s, opacity 0.2s, background-color 0.3s, box-shadow 0.2s;
 }
 
 button:active { transform: scale(0.96); }
@@ -96,6 +108,7 @@ button:hover { opacity: 0.9; }
 .btn-success { background-color: var(--success); color: white; }
 .danger { background-color: var(--danger); color: white; }
 .secondary { background-color: #95a5a6; color: white; }
+
 #btn-start { background-color: var(--primary); color: white; width: 100%; }
 #btn-next { background-color: var(--secondary); color: white; }
 #btn-skip { background-color: #bdc3c7; color: white; }
@@ -153,7 +166,7 @@ th {
 }
 
 /* --- MODAL DE DEBATE --- */
-#modal-debate {
+#modal-debate, #modal-tablas {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(44, 62, 80, 0.9);
@@ -168,6 +181,7 @@ th {
     padding: 30px;
     border-radius: 20px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    text-align: center;
 }
 
 #argumento-debate {
@@ -179,18 +193,23 @@ th {
     border-radius: 8px;
     font-family: inherit;
     resize: none;
-    box-sizing: border-box;
 }
 
 /* --- ANIMACIONES DEL LOBBY DE BIENVENIDA --- */
-
 #start-screen {
-    position: relative;
-    overflow: hidden; /* Evita que la pantalla genere scroll si algo flota muy lejos */
-    /* Un fondo moderno y vibrante que cambia de color */
+    /* Eliminamos position relative de aquí y lo pusimos en #game-container */
+    /* para que el gradiente ocupe todo el contenedor sin desbordar feo */
+    position: absolute; /* Para que cubra el contenedor principal */
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10;
+    
     background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
     background-size: 400% 400%;
     animation: gradientFluid 12s ease infinite;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Animación del fondo */
@@ -204,49 +223,46 @@ th {
 .floating-bg {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none; /* CRUCIAL: Para que los clics traspasen a los botones reales */
+    pointer-events: none;
     z-index: 0;
 }
 
 /* --- REDISEÑO ARCADE RETRO DE LA TARJETA DE INICIO --- */
-
 #start-screen .welcome-card {
     position: relative;
     z-index: 1;
+    width: 90%;
+    max-width: 400px;
     
-    /* 1. Fondo Oscuro Arcade con Patrón Geométrico Sutil (Píxeles/Puntos) */
-    background-color: #1a012d; /* Morado muy oscuro de fondo */
+    /* Fondo Oscuro Arcade */
+    background-color: #1a012d; 
     background-image: 
-        radial-gradient(#ff00ff 10%, transparent 10%), /* Puntos Magenta */
-        radial-gradient(#00ffff 10%, transparent 10%); /* Puntos Cyan */
-    background-size: 30px 30px; /* Tamaño del patrón */
-    background-position: 0 0, 15px 15px; /* Desfase para que parezcan píxeles */
+        radial-gradient(#ff00ff 10%, transparent 10%), 
+        radial-gradient(#00ffff 10%, transparent 10%);
+    background-size: 30px 30px; 
+    background-position: 0 0, 15px 15px; 
     
-    /* 2. Bordes Neón con Grosor Estilo 80s */
+    /* Bordes Neón */
     border: 6px solid #fff;
-    border-radius: 10px; /* Bordes menos redondeados, más blocky */
+    border-radius: 10px; 
     
-    /* 3. El Efecto Neón: Sombreado múltiple Magenta y Cyan */
+    /* Efecto Neón */
     box-shadow: 
-        /* Neón exterior */
         0 0 15px #ff00ff, 
         0 0 30px #00ffff,
-        /* Neón interior que da profundidad */
         inset 0 0 15px #ff00ff,
-        /* Sombra dura arcade */
         10px 10px 0px rgba(0,0,0,0.5);
         
-    backdrop-filter: blur(2px); /* Un toque de blur para integrar con el fondo fluido */
-    padding: 40px;
+    backdrop-filter: blur(2px); 
+    padding: 30px; /* Reduje un poco el padding para que entre mejor */
     transition: transform 0.3s ease;
 }
 
-/* 4. Efecto CRT: Líneas de escaneo sutiles sobre toda la tarjeta */
+/* Efecto CRT */
 #start-screen .welcome-card::after {
     content: "";
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    /* Gradiente lineal repetitivo para las líneas */
     background: repeating-linear-gradient(
         0deg,
         rgba(0, 0, 0, 0.1),
@@ -254,46 +270,54 @@ th {
         transparent 2px,
         transparent 4px
     );
-    pointer-events: none; /* No interfiere con los clics */
-    border-radius: 10px;
-    z-index: 2; /* Sobre el contenido, pero bajo los elementos flotantes */
+    pointer-events: none; 
+    border-radius: 4px; /* Un poco menos que el contenedor */
+    z-index: 2; 
 }
 
-/* 5. Ajustar colores de texto e inputs para que resalten sobre el fondo oscuro */
+/* Ajustes de color dentro de la tarjeta arcade */
 #start-screen .welcome-card h2,
 #start-screen .welcome-card label {
-    color: #00ffff; /* Texto color Cyan Neón */
+    color: #00ffff; 
     text-shadow: 0 0 8px #00ffff;
-    font-family: 'Courier New', Courier, monospace; /* Tipografía más 'tech' */
+    font-family: 'Courier New', Courier, monospace; 
 }
 
-#start-screen .welcome-card p {
-    color: #ff00ff; /* Texto color Magenta Neón */
+#start-screen .welcome-card p,
+#start-screen .welcome-card .empty-msg {
+    color: #ff00ff !important; 
     text-shadow: 0 0 5px #ff00ff;
 }
 
-/* Ajuste de inputs para que parezcan de terminal retro */
+/* Inputs Arcade */
 #start-screen .welcome-card input,
-#start-screen .welcome-card select {
+#start-screen .welcome-card select,
+#start-screen .welcome-card textarea {
     background: #2d004d;
     color: #fff;
-    border: 2px solid #ff00ff; /* Borde Magenta */
+    border: 2px solid #ff00ff; 
     box-shadow: 0 0 5px #ff00ff;
     font-family: monospace;
+    width: 100%;
+    margin-top: 5px;
 }
 
-/* Estilo para los botones dentro de la tarjeta para que sean más 'chunky' 80s */
+/* Botones Arcade */
 #start-screen .welcome-card button {
-    border: 4px solid #fff;
+    border: 2px solid #fff; /* Borde más fino para que no se vea tan tosco */
     text-transform: uppercase;
     font-weight: bold;
-    box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
+    box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
     transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 10px;
+    /* Aseguramos que tomen su color base y no se pongan blancos */
+    color: white; 
 }
 
 #start-screen .welcome-card button:hover {
     transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+    box-shadow: 1px 1px 0px rgba(0,0,0,0.5);
 }
 
 /* Estilos de los elementos flotantes */
@@ -302,7 +326,6 @@ th {
     left: var(--x);
     top: var(--y);
     opacity: 0;
-    /* La animación dura 8s, sube, y vuelve a empezar gracias al delay */
     animation: floatUp 8s ease-in-out infinite;
     animation-delay: var(--delay);
     font-weight: bold;
@@ -313,7 +336,7 @@ th {
     font-size: 1.8rem; 
     color: #fff; 
     text-shadow: 1px 1px 4px rgba(0,0,0,0.4); 
-    font-family: 'Comic Sans MS', cursive, sans-serif; /* Un toque más lúdico */
+    font-family: 'Comic Sans MS', cursive, sans-serif; 
 }
 
 .float-item.points { 
@@ -328,7 +351,6 @@ th {
     filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
 }
 
-/* El movimiento: Sube 150px, gira un poco, y se desvanece */
 @keyframes floatUp {
     0% { transform: translateY(0px) rotate(0deg) scale(0.8); opacity: 0; }
     20% { opacity: 0.8; }
@@ -336,14 +358,30 @@ th {
     80% { opacity: 0.8; }
     100% { transform: translateY(-150px) rotate(-15deg) scale(0.8); opacity: 0; }
 }
-/* --- ANIMACIONES --- */
+
+/* --- ANIMACIONES GENERALES --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
-/* Estilos para el Lobby */
-.lobby-controls { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-.lobby-controls p { color: #7f8c8d; font-size: 0.9rem; margin: 15px 0; }
-.rooms-container { display: flex; flex-direction: column; gap: 10px; max-height: 150px; overflow-y: auto; }
-.empty-msg { font-style: italic; color: #95a5a6 !important; }
-#host-name-display { color: var(--primary); font-weight: bold; }
+
+/* Estilos para el Lobby (Botones de unirse) */
+.lobby-controls { 
+    margin-top: 20px; 
+    padding-top: 20px; 
+    border-top: 1px solid rgba(255, 255, 255, 0.2); /* Línea divisoria más sutil */
+}
+.rooms-container { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 10px; 
+    max-height: 150px; 
+    overflow-y: auto; 
+    /* Estilo scrollbar para no romper el diseño arcade */
+    scrollbar-width: thin;
+    scrollbar-color: #ff00ff #2d004d;
+}
+
+.rooms-container::-webkit-scrollbar { width: 8px; }
+.rooms-container::-webkit-scrollbar-track { background: #2d004d; }
+.rooms-container::-webkit-scrollbar-thumb { background-color: #ff00ff; border-radius: 4px; }
