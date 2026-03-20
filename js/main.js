@@ -5,13 +5,13 @@ let myRole = null;
 let myName = "";
 let rivalName = "";
 let puntosSumadosEnEstaRonda = false; 
-let yoGriteStop = false; // Para saber quién cortó el juego
+let yoGriteStop = false; 
+let scoreP1 = 0; // Agregamos la variable de puntaje principal aquí para evitar errores
 
-// --- 1. GESTIÓN DE PANTALLAS (Actualizada para el modo Arcade) ---
+// --- 1. GESTIÓN DE PANTALLAS ---
 function showScreen(screenId) {
     const allScreens = ['start-screen', 'waiting-screen', 'countdown-screen', 'play-area', 'results-area', 'final-screen'];
     
-    // Si mostramos la pantalla de inicio, activamos el modo lobby arcade en el body
     if (screenId === 'start-screen') {
         document.body.classList.add('lobby-active');
     } else {
@@ -22,7 +22,9 @@ function showScreen(screenId) {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
     });
-    document.getElementById(screenId).classList.remove('hidden');
+    
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) targetScreen.classList.remove('hidden');
 }
 
 // --- 2. SISTEMA DE SALAS (LOBBY) ---
@@ -31,8 +33,9 @@ db.ref('salas').on('value', (snapshot) => {
 
     const salas = snapshot.val() || {};
     const listaUI = document.getElementById('rooms-list');
-    listaUI.innerHTML = ""; 
+    if (!listaUI) return;
     
+    listaUI.innerHTML = ""; 
     let salasDisponibles = 0;
     const ahora = Date.now();
 
@@ -51,18 +54,20 @@ db.ref('salas').on('value', (snapshot) => {
     if (salasDisponibles === 0) listaUI.innerHTML = '<p class="empty-msg">No hay partidas abiertas.</p>';
 });
 
-document.getElementById('mazo-select').addEventListener('change', (e) => {
-    document.getElementById('custom-mazo-area').classList.toggle('hidden', e.target.value !== 'custom');
+document.getElementById('mazo-select')?.addEventListener('change', (e) => {
+    document.getElementById('custom-mazo-area')?.classList.toggle('hidden', e.target.value !== 'custom');
 });
 
-// Función para limpiar caracteres prohibidos en Firebase
 function limpiarMazo(mazoArray) {
     return mazoArray.map(cat => cat.replace(/[.#$/\[\]]/g, '-'));
 }
 
-// CREAR SALA (HOST) - LÓGICA AUTOMÁTICA 1VS1 PRESERVADA
-document.getElementById('btn-create-room').addEventListener('click', () => {
-    myName = document.getElementById('my-name').value.trim();
+// CREAR SALA
+document.getElementById('btn-create-room')?.addEventListener('click', () => {
+    const inputName = document.getElementById('my-name');
+    if (!inputName) return;
+    
+    myName = inputName.value.trim();
     if (!myName) { alert("Pon tu nombre primero."); return; }
     
     myRole = 'host';
@@ -71,7 +76,6 @@ document.getElementById('btn-create-room').addEventListener('click', () => {
     const selectMazo = document.getElementById('mazo-select').value;
     let mazoElegido = selectMazo === 'custom' ? document.getElementById('custom-categories').value.split(',').map(c => c.trim()) : mazosPredefinidos[selectMazo];
     
-    // FIX BUG 1: Limpiamos los nombres de las categorías antes de usarlos
     mazoActual = limpiarMazo(mazoElegido);
 
     db.ref(`salas/${roomCode}`).set({
@@ -82,27 +86,32 @@ document.getElementById('btn-create-room').addEventListener('click', () => {
         timestamp: Date.now()
     });
 
-    document.getElementById('room-code-display').innerText = roomCode;
+    const displayCode = document.getElementById('room-code-display');
+    if (displayCode) displayCode.innerText = roomCode;
+    
     showScreen('waiting-screen');
 
     db.ref(`salas/${roomCode}/guestName`).on('value', (snap) => {
         if (snap.val()) {
             rivalName = snap.val();
             db.ref(`salas/${roomCode}/guestName`).off();
-            prepararYDispararCountdown(); // Arranca solito
+            prepararYDispararCountdown(); 
         }
     });
 });
 
-document.getElementById('btn-cancel-room').addEventListener('click', () => {
+document.getElementById('btn-cancel-room')?.addEventListener('click', () => {
     if (roomCode) db.ref(`salas/${roomCode}`).remove();
     roomCode = null;
     showScreen('start-screen');
 });
 
-// UNIRSE (GUEST)
+// UNIRSE
 function unirseSala(codigo, hostNombre) {
-    myName = document.getElementById('my-name').value.trim();
+    const inputName = document.getElementById('my-name');
+    if (!inputName) return;
+
+    myName = inputName.value.trim();
     if (!myName) { alert("Pon tu nombre primero."); return; }
 
     myRole = 'guest';
@@ -111,13 +120,13 @@ function unirseSala(codigo, hostNombre) {
 
     db.ref(`salas/${roomCode}`).update({ guestName: myName });
     db.ref(`salas/${roomCode}/config`).once('value', (snap) => {
-        mazoActual = snap.val().mazo; // El mazo ya viene limpio del Host
+        if (snap.val() && snap.val().mazo) mazoActual = snap.val().mazo; 
     });
 
     escucharEstadoJuego(); 
 }
 
-// --- 3. SECUENCIA AUTOMÁTICA (Countdown) ---
+// --- 3. SECUENCIA (Countdown) ---
 function prepararYDispararCountdown() {
     const letra = elegirLetraAzar();
     if (!letra) { db.ref(`salas/${roomCode}/actual/estado`).set('finished'); return; }
@@ -142,27 +151,30 @@ function escucharEstadoJuego() {
             iniciarAnimacionCountdown(data.letra);
         } 
         else if (data.estado === 'jugando') {
-            // Si alguien rechaza las tablas o las cancela, se oculta el modal
             document.getElementById('modal-tablas')?.classList.add('hidden');
         }
         else if (data.estado === 'tablas') {
-            // LÓGICA DE TABLAS (Mostrar Modal)
             const modal = document.getElementById('modal-tablas');
             if(modal) modal.classList.remove('hidden');
             
+            const msgTablas = document.getElementById('tablas-msg');
+            const prop = document.getElementById('tablas-controls-proposer');
+            const rec = document.getElementById('tablas-controls-receiver');
+            
             if (data.propuestoPor === myRole) {
-                document.getElementById('tablas-msg').innerText = `Esperando a que ${rivalName} acepte las tablas...`;
-                document.getElementById('tablas-controls-proposer').classList.remove('hidden');
-                document.getElementById('tablas-controls-receiver').classList.add('hidden');
+                if(msgTablas) msgTablas.innerText = `Esperando a que ${rivalName} acepte las tablas...`;
+                if(prop) prop.classList.remove('hidden');
+                if(rec) rec.classList.add('hidden');
             } else {
-                document.getElementById('tablas-msg').innerText = `¡${rivalName} propone dejar esta letra en Tablas! ¿Aceptas?`;
-                document.getElementById('tablas-controls-proposer').classList.add('hidden');
-                document.getElementById('tablas-controls-receiver').classList.remove('hidden');
+                if(msgTablas) msgTablas.innerText = `¡${rivalName} propone dejar esta letra en Tablas! ¿Aceptas?`;
+                if(prop) prop.classList.add('hidden');
+                if(rec) rec.classList.remove('hidden');
             }
         }
         else if (data.estado === 'stop') {
             document.getElementById('modal-tablas')?.classList.add('hidden');
-            if (document.getElementById('results-area').classList.contains('hidden')) {
+            const resArea = document.getElementById('results-area');
+            if (resArea && resArea.classList.contains('hidden')) {
                 manejarCorteDeRonda();
             }
         }
@@ -179,33 +191,44 @@ function iniciarAnimacionCountdown(letra) {
     sumarPuntosSeguros(); 
     yoGriteStop = false; 
 
-    // Solo actualizamos los nombres en la tabla del VAR, ignoramos el header
-    document.getElementById('th-p1').innerText = myName;
-    document.getElementById('th-p2').innerText = rivalName;
+    // Blindaje anti-nulos
+    const thP1 = document.getElementById('th-p1');
+    const thP2 = document.getElementById('th-p2');
+    if (thP1) thP1.innerText = myName;
+    if (thP2) thP2.innerText = rivalName;
 
     showScreen('countdown-screen');
-    document.getElementById('challenge-msg').innerText = `¡${rivalName} está listo!`;
-    document.getElementById('countdown-number').classList.remove('hidden');
-    document.getElementById('letra-revelada').classList.add('hidden');
+    
+    const msg = document.getElementById('challenge-msg');
+    if(msg) msg.innerText = `¡${rivalName} está listo!`;
+    
+    const numDisplay = document.getElementById('countdown-number');
+    const letDisplay = document.getElementById('letra-revelada');
+    
+    if (numDisplay) numDisplay.classList.remove('hidden');
+    if (letDisplay) letDisplay.classList.add('hidden');
 
     let contador = 3;
-    document.getElementById('countdown-number').innerText = contador;
+    if (numDisplay) numDisplay.innerText = contador;
 
     const intervalo = setInterval(() => {
         contador--;
         if (contador > 0) {
-            document.getElementById('countdown-number').innerText = contador;
+            if (numDisplay) numDisplay.innerText = contador;
         } else if (contador === 0) {
-            document.getElementById('countdown-number').innerText = "¡YA!";
+            if (numDisplay) numDisplay.innerText = "¡YA!";
         } else {
             clearInterval(intervalo);
-            document.getElementById('countdown-number').classList.add('hidden');
-            document.getElementById('letra-revelada').innerText = letra;
-            document.getElementById('letra-revelada').classList.remove('hidden');
+            if (numDisplay) numDisplay.classList.add('hidden');
+            if (letDisplay) {
+                letDisplay.innerText = letra;
+                letDisplay.classList.remove('hidden');
+            }
             
             setTimeout(() => {
                 letraActual = letra;
-                document.getElementById('current-letter-display').innerText = letra;
+                const currLet = document.getElementById('current-letter-display');
+                if (currLet) currLet.innerText = letra;
                 prepararRondaLocal();
             }, 1000);
         }
@@ -217,10 +240,13 @@ function prepararRondaLocal() {
     indiceCategoriaActual = 0;
     respuestasJugador = {};
     
-    // Habilitar botones por si venimos de un tiempo de gracia previo
-    document.getElementById('btn-next').disabled = false;
-    document.getElementById('btn-skip').disabled = false;
-    document.getElementById('user-input').style.borderColor = "#ddd";
+    const btnNext = document.getElementById('btn-next');
+    const btnSkip = document.getElementById('btn-skip');
+    const userInput = document.getElementById('user-input');
+    
+    if (btnNext) btnNext.disabled = false;
+    if (btnSkip) btnSkip.disabled = false;
+    if (userInput) userInput.style.borderColor = "#ff00ff";
     
     showScreen('play-area');
     actualizarInterfazCategoria();
@@ -229,15 +255,14 @@ function prepararRondaLocal() {
 // --- 4. LÓGICA DURANTE EL JUEGO ---
 function guardarRespuestaActual() {
     const input = document.getElementById('user-input');
+    if (!input) return;
     const catNombre = mazoActual[indiceCategoriaActual];
     if (catNombre) {
         respuestasJugador[catNombre] = input.value.trim();
     }
-    // Ya no borramos el input a la fuerza aquí. De eso se encarga la interfaz.
 }
 
 function estanTodasCompletas() {
-    // Revisa si en cada categoría del mazo hay una palabra escrita
     for (let cat of mazoActual) {
         if (!respuestasJugador[cat] || respuestasJugador[cat].trim() === "") {
             return false;
@@ -247,7 +272,6 @@ function estanTodasCompletas() {
 }
 
 function irAProximaCategoriaVacia() {
-    // Busca de forma circular la próxima categoría que esté en blanco
     for (let i = 1; i <= mazoActual.length; i++) {
         let nextIndex = (indiceCategoriaActual + i) % mazoActual.length;
         let catNombre = mazoActual[nextIndex];
@@ -260,50 +284,46 @@ function irAProximaCategoriaVacia() {
     }
 }
 
-document.getElementById('btn-next').addEventListener('click', () => {
+document.getElementById('btn-next')?.addEventListener('click', () => {
     guardarRespuestaActual();
-    
     if (estanTodasCompletas()) {
-        // Si ya está todo lleno, "Siguiente" funciona como "Tutti Frutti"
         yoGriteStop = true;
         db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     } else {
-        // Si faltan, salta a la primera que encuentre vacía
         irAProximaCategoriaVacia();
     }
 });
 
-document.getElementById('btn-skip').addEventListener('click', () => {
+document.getElementById('btn-skip')?.addEventListener('click', () => {
     guardarRespuestaActual();
     irAProximaCategoriaVacia();
 });
 
 function actualizarInterfazCategoria() {
     const catNombre = mazoActual[indiceCategoriaActual];
-    document.getElementById('category-name').innerText = catNombre;
+    const catDisplay = document.getElementById('category-name');
+    if (catDisplay) catDisplay.innerText = catNombre;
     
     const input = document.getElementById('user-input');
-    // Si ya habías escrito algo en esta categoría (y pegaste la vuelta), te lo muestra.
-    // Si está vacía, la deja en blanco.
-    input.value = respuestasJugador[catNombre] || ""; 
-    input.focus();
+    if (input) {
+        input.value = respuestasJugador[catNombre] || ""; 
+        input.focus();
+    }
 }
 
-// --- 5. VAR, STOP Y TIEMPO DE GRACIA (Crítico Mobile Fix y preservado) ---
-document.getElementById('btn-stop').addEventListener('click', () => {
+// --- 5. VAR Y TABLAS ---
+document.getElementById('btn-stop')?.addEventListener('click', () => {
     guardarRespuestaActual(); 
-    
     if (estanTodasCompletas()) {
         yoGriteStop = true; 
         db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     } else {
-        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar. Si se traban, ofreceles Tablas a tu rival.");
+        alert("¡No podés gritar Tutti Frutti! Te faltan categorías por completar.");
         actualizarInterfazCategoria(); 
     }
 });
 
-// NUEVO: Botón de escape para las letras imposibles (Rendirse -> Tablas)
-document.getElementById('btn-tablas').addEventListener('click', () => {
+document.getElementById('btn-tablas')?.addEventListener('click', () => {
     guardarRespuestaActual(); 
     db.ref(`salas/${roomCode}/actual`).update({
         estado: 'tablas',
@@ -311,7 +331,6 @@ document.getElementById('btn-tablas').addEventListener('click', () => {
     });
 });
 
-// Nota: Estas 3 funciones deben llamarse desde el HTML (onclick="cancelarTablas()", etc.)
 window.cancelarTablas = function() {
     db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
 };
@@ -327,15 +346,21 @@ window.aceptarTablas = function() {
 };
 
 function manejarCorteDeRonda() {
-    const inputActual = document.getElementById('user-input').value.trim();
+    const input = document.getElementById('user-input');
+    const inputActual = input ? input.value.trim() : "";
     
-    // Si NO fui yo quien gritó stop, y tengo al menos 2 letras escritas, doy tiempo de gracia
     if (!yoGriteStop && inputActual.length >= 2) {
-        document.getElementById('category-name').innerText = "¡TIEMPO! 3 segundos...";
-        document.getElementById('category-name').style.color = "red";
-        document.getElementById('user-input').style.borderColor = "red";
-        document.getElementById('btn-next').disabled = true;
-        document.getElementById('btn-skip').disabled = true;
+        const catName = document.getElementById('category-name');
+        if (catName) {
+            catName.innerText = "¡TIEMPO! 3 segundos...";
+            catName.style.color = "red";
+        }
+        if (input) input.style.borderColor = "red";
+        
+        const btnNext = document.getElementById('btn-next');
+        const btnSkip = document.getElementById('btn-skip');
+        if (btnNext) btnNext.disabled = true;
+        if (btnSkip) btnSkip.disabled = true;
         
         setTimeout(() => {
             finalizarYMostrarVAR();
@@ -348,8 +373,11 @@ function manejarCorteDeRonda() {
 async function finalizarYMostrarVAR() {
     guardarRespuestaActual(); 
     showScreen('results-area');
-    document.getElementById('loader').classList.remove('hidden');
-    document.getElementById('results-content').classList.add('hidden');
+    
+    const loader = document.getElementById('loader');
+    const resContent = document.getElementById('results-content');
+    if (loader) loader.classList.remove('hidden');
+    if (resContent) resContent.classList.add('hidden');
 
     const rivalRole = myRole === 'host' ? 'guest' : 'host';
     const payload = { completado: true, data: respuestasJugador || {} };
@@ -363,34 +391,38 @@ async function finalizarYMostrarVAR() {
             respuestasRef.off(); 
             const respuestasRival = payloadRival.data || {};
             await mostrarRevision(respuestasJugador, respuestasRival);
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('results-content').classList.remove('hidden');
+            
+            if (loader) loader.classList.add('hidden');
+            if (resContent) resContent.classList.remove('hidden');
         }
     });
 }
 
-// --- 6. SUMA DE PUNTOS Y CONTINUACIÓN ---
+// --- 6. SUMA DE PUNTOS ---
 function sumarPuntosSeguros() {
     if (puntosSumadosEnEstaRonda) return; 
     
     const filas = document.querySelectorAll('#results-body tr');
     let totalRonda = 0;
     filas.forEach(fila => {
-        const pts = parseInt(fila.querySelector('td[id^="pts-"]')?.innerText || 0);
+        const tdPuntos = fila.querySelector('td[id^="pts-"]');
+        const pts = parseInt(tdPuntos?.innerText || 0);
         totalRonda += pts;
     });
 
     scoreP1 += totalRonda; 
-    document.getElementById('score-p1').innerText = scoreP1;
+    const scoreUI = document.getElementById('score-p1');
+    if (scoreUI) scoreUI.innerText = scoreP1;
+    
     puntosSumadosEnEstaRonda = true;
 }
 
-document.getElementById('btn-next-round').addEventListener('click', () => {
+document.getElementById('btn-next-round')?.addEventListener('click', () => {
     sumarPuntosSeguros();
     db.ref(`salas/${roomCode}/actual/estado`).set('solicitar_nueva'); 
 });
 
-document.getElementById('btn-end-game').addEventListener('click', () => {
+document.getElementById('btn-end-game')?.addEventListener('click', () => {
     sumarPuntosSeguros();
     db.ref(`salas/${roomCode}/scores/${myRole}`).set(scoreP1).then(() => {
         db.ref(`salas/${roomCode}/actual/estado`).set('finished');
@@ -413,26 +445,34 @@ function mostrarSumaFinal() {
             const miScoreFinal = myRole === 'host' ? scores.host : scores.guest;
             const rivalScoreFinal = myRole === 'host' ? scores.guest : scores.host;
             
-            document.getElementById('label-final-p1').innerText = myName;
-            document.getElementById('final-score-me').innerText = miScoreFinal;
-            document.getElementById('label-final-p2').innerText = rivalName;
-            document.getElementById('final-score-rival').innerText = rivalScoreFinal;
+            const lP1 = document.getElementById('label-final-p1');
+            const scMe = document.getElementById('final-score-me');
+            const lP2 = document.getElementById('label-final-p2');
+            const scRival = document.getElementById('final-score-rival');
+            
+            if (lP1) lP1.innerText = myName;
+            if (scMe) scMe.innerText = miScoreFinal;
+            if (lP2) lP2.innerText = rivalName;
+            if (scRival) scRival.innerText = rivalScoreFinal;
 
             const titulo = document.getElementById('winner-announcement');
-            if (miScoreFinal > rivalScoreFinal) {
-                titulo.innerText = "🏆 ¡GANASTE!";
-                confetti({ particleCount: 400, spread: 120, origin: { y: 0.6 } });
-            } else if (miScoreFinal < rivalScoreFinal) {
-                titulo.innerText = `😢 Ganó ${rivalName}`;
-            } else {
-                titulo.innerText = "🤝 ¡EMPATE ÉPICO!";
+            if (titulo) {
+                if (miScoreFinal > rivalScoreFinal) {
+                    titulo.innerText = "🏆 ¡GANASTE!";
+                    if (typeof confetti === 'function') confetti({ particleCount: 400, spread: 120, origin: { y: 0.6 } });
+                } else if (miScoreFinal < rivalScoreFinal) {
+                    titulo.innerText = `😢 Ganó ${rivalName}`;
+                } else {
+                    titulo.innerText = "🤝 ¡EMPATE ÉPICO!";
+                }
             }
 
             if(myRole === 'host') {
                 setTimeout(() => db.ref(`salas/${roomCode}`).remove(), 5000);
             }
         } else {
-            document.getElementById('winner-announcement').innerText = "Esperando al rival...";
+            const tit = document.getElementById('winner-announcement');
+            if(tit) tit.innerText = "Esperando al rival...";
         }
     });
 }
