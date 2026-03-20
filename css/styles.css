@@ -43,6 +43,7 @@ header {
 }
 
 /* --- CONTENEDOR PRINCIPAL --- */
+
 #game-container {
     width: 100%;
     max-width: 550px;
@@ -51,8 +52,9 @@ header {
     border-radius: 20px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
-    position: relative; /* Importante para que el absolute del lobby funcione bien */
-    overflow: hidden; /* Para contener las animaciones flotantes si usamos padding-box */
+    position: relative; 
+    overflow: hidden; 
+    min-height: 600px; /* <--- ESTA LÍNEA EVITA QUE SE APLASTE */
 }
 
 /* --- ELEMENTOS DE JUEGO --- */
@@ -197,19 +199,16 @@ th {
 
 /* --- ANIMACIONES DEL LOBBY DE BIENVENIDA --- */
 #start-screen {
-    /* Eliminamos position relative de aquí y lo pusimos en #game-container */
-    /* para que el gradiente ocupe todo el contenedor sin desbordar feo */
-    position: absolute; /* Para que cubra el contenedor principal */
+    position: absolute; 
     top: 0; left: 0; width: 100%; height: 100%;
     z-index: 10;
-    
     background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
     background-size: 400% 400%;
     animation: gradientFluid 12s ease infinite;
-    
     display: flex;
     justify-content: center;
     align-items: center;
+    border-radius: inherit; /* <--- Para que copie los bordes redondos del contenedor */
 }
 
 /* Animación del fondo */
