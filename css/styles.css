@@ -141,6 +141,18 @@ button:hover { opacity: 0.9; }
 .danger { background-color: var(--danger); }
 .secondary { background-color: #bdc3c7; color: #1a012d; }
 
+/* Botones específicos de juego */
+#btn-next {
+    background-color: var(--primary); /* Cyan brillante */
+    color: #1a012d; /* Texto oscuro para que se lea perfecto */
+    border-color: #fff;
+}
+
+#btn-skip {
+    background-color: #bdc3c7; /* Gris máquina de arcade */
+    color: #1a012d; /* Texto oscuro */
+    border-color: #fff;
+}
 /* Inputs Arcade */
 input[type="text"], textarea, select {
     width: 100%;
