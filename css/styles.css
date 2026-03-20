@@ -1,54 +1,67 @@
-/* --- VARIABLES Y RESET --- */
+/* ========================================================
+   1. VARIABLES Y RESET (TEMA ARCADE GLOBAL)
+   ======================================================== */
 :root {
-    --primary: #4a90e2;
-    --secondary: #f39c12;
+    --primary: #00ffff; /* Cyan Arcade */
+    --secondary: #ff00ff; /* Magenta Arcade */
     --danger: #e74c3c;
     --success: #27ae60;
-    --background: #f4f7f6;
-    --text: #2c3e50;
-    --card-bg: #ffffff;
+    --background: #1a012d; /* Fondo principal oscuro */
+    --text: #ffffff;
+    --card-bg: rgba(26, 1, 45, 0.95); /* Fondo de tarjetas */
 }
 
+* { box-sizing: border-box; }
+.hidden { display: none !important; }
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Courier New', Courier, monospace; /* Tipografía Retro */
     color: var(--text);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Centrar verticalmente */
+    justify-content: center;
     margin: 0;
     padding: 20px;
-    box-sizing: border-box;
     min-height: 100vh;
     
     /* Fondo vibrante arcade en TODA la pantalla */
     background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
     background-size: 400% 400%;
     animation: gradientFluid 12s ease infinite;
+    overflow-x: hidden;
 }
 
-*, *:before, *:after {
-  box-sizing: inherit;
-}
-
-.hidden { display: none !important; }
-
-/* --- MAGIA DEL LOBBY (Ocultar contenedor blanco) --- */
-/* Cuando el lobby está activo, el recuadro blanco del juego desaparece */
+/* Magia del Lobby: Cuando estamos en inicio, quitamos el recuadro principal */
 body.lobby-active #game-container {
     background: transparent;
     box-shadow: none;
     padding: 0;
     max-width: none;
-    overflow: visible; /* Permite que el contenido (como modales) no se corte */
+    overflow: visible; 
+    border: none;
 }
 
-/* --- ANIMACIONES FLOTANTES (Fondo completo) --- */
+/* ========================================================
+   2. ANIMACIONES GLOBALES Y FONDO FLOTANTE
+   ======================================================== */
+@keyframes gradientFluid {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Elementos Flotantes (Manzana, Joystick, etc.) */
 .floating-bg {
-    position: fixed; /* Ocupar toda la ventana siempre */
+    position: fixed; 
     top: 0; left: 0; width: 100vw; height: 100vh;
     pointer-events: none;
-    z-index: 0; /* Detrás del recuadro beige si está visible, pero encima del fondo de color */
+    z-index: 0; 
 }
 
 .float-item {
@@ -63,24 +76,9 @@ body.lobby-active #game-container {
     z-index: 1; 
 }
 
-.float-item.word { 
-    font-size: 1.8rem; 
-    color: #fff; 
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.4); 
-    font-family: 'Comic Sans MS', cursive, sans-serif; 
-}
-
-.float-item.points { 
-    font-size: 2.5rem; 
-    color: #f1c40f; 
-    text-shadow: 2px 2px 0px #d35400; 
-    font-family: monospace; 
-}
-
-.float-item.icon { 
-    font-size: 3.5rem; 
-    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
-}
+.float-item.word { font-size: 1.8rem; color: #fff; text-shadow: 1px 1px 4px rgba(0,0,0,0.4); font-family: 'Comic Sans MS', cursive, sans-serif; }
+.float-item.points { font-size: 2.5rem; color: #f1c40f; text-shadow: 2px 2px 0px #d35400; font-family: monospace; }
+.float-item.icon { font-size: 3.5rem; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3)); }
 
 @keyframes floatUp {
     0% { transform: translateY(0px) rotate(0deg) scale(0.8); opacity: 0; }
@@ -90,274 +88,28 @@ body.lobby-active #game-container {
     100% { transform: translateY(-150px) rotate(-15deg) scale(0.8); opacity: 0; }
 }
 
-/* --- CONTENEDOR PRINCIPAL (Durante el juego) --- */
+/* ========================================================
+   3. CONTENEDOR PRINCIPAL Y COMPONENTES BASE (Arcade)
+   ======================================================== */
+/* La "Carcasa" de la máquina arcade */
 #game-container {
     width: 100%;
     max-width: 550px;
     background: var(--card-bg);
     padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease; /* Transición suave al entrar/salir del lobby */
-    z-index: 10;
-}
-
-/* --- HEADER Y MARCADOR --- */
-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-#score-board {
-    background: var(--card-bg);
-    padding: 10px 20px;
-    border-radius: 25px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    font-size: 1.2rem;
-    display: inline-block;
-}
-
-/* --- ELEMENTOS DE JUEGO --- */
-#current-letter {
-    font-size: 5rem;
-    color: var(--primary);
-    margin: 20px 0;
-    font-weight: bold;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
-}
-
-#category-card {
-    border: 2px solid #f0f0f0;
-    padding: 25px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    background-color: #fafafa;
-}
-
-input[type="text"], textarea {
-    width: 100%;
-    padding: 12px;
-    font-size: 1.1rem;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    outline: none;
-    transition: border-color 0.3s;
-}
-
-input[type="text"]:focus, textarea:focus {
-    border-color: var(--primary);
-}
-
-textarea {
-    resize: vertical;
-    min-height: 80px;
-}
-
-/* --- BOTONES --- */
-button {
-    padding: 12px 24px;
-    font-size: 1rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: transform 0.1s, opacity 0.2s, background-color 0.3s, box-shadow 0.2s;
-}
-
-button:active { transform: scale(0.96); }
-button:hover { opacity: 0.9; }
-
-.btn-success { background-color: var(--success); color: white; }
-.danger { background-color: var(--danger); color: white; }
-.secondary { background-color: #95a5a6; color: white; }
-
-#btn-start { background-color: var(--primary); color: white; width: 100%; }
-#btn-next { background-color: var(--secondary); color: white; }
-#btn-skip { background-color: #bdc3c7; color: white; }
-#btn-stop { background-color: var(--danger); color: white; width: 100%; margin-top: 20px; }
-
-/* --- LOADER (SPINNER) --- */
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #f3f3f3;
-    border-top: 5px solid var(--primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 20px auto;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* ========================================================
-   SECCIÓN 5: TABLA DE RESULTADOS & VAR (THEMED ARCADE)
-   ======================================================== */
-
-#results-area {
-    width: 100%;
-    animation: fadeIn 0.5s ease;
-}
-
-#results-area h2 {
-    color: #fff;
-    text-shadow: 0 0 8px #00ffff; /* Brillo Cyan Arcade */
-    text-align: center;
-    margin-top: 0;
-}
-
-/* Contenedor principal del VAR estilo Arcade (Como una tarjeta) */
-#results-area #results-content {
-    background-color: rgba(26, 1, 45, 0.95); /* Fondo Oscuro Arcade */
-    border: 6px solid #fff; /* Borde grueso Arcade */
     border-radius: 10px;
-    box-shadow: 
-        /* Neón exterior */
-        0 0 15px #ff00ff, 
-        0 0 30px #00ffff,
-        /* Neón interior */
-        inset 0 0 15px #ff00ff,
-        /* Sombra dura arcade */
-        10px 10px 0px rgba(0,0,0,0.5);
-    backdrop-filter: blur(2px);
-    padding: 25px;
-    position: relative;
-    overflow: hidden; /* Para contener las líneas CRT */
-    z-index: 10;
-}
-
-/* Efecto CRT sutil exclusivo sobre la tarjeta de resultados */
-#results-area #results-content::after {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    /* Gradiente de líneas oscuras sutiles */
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.1),
-        rgba(0, 0, 0, 0.1) 2px,
-        transparent 2px,
-        transparent 4px
-    );
-    pointer-events: none;
-    border-radius: 4px;
-    z-index: 2; /* Sobre la tabla, pero bajo los elementos flotantes si los hubiera */
-}
-
-/* --- ESTILOS DE LA TABLA ARCADE --- */
-#results-table {
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse;
-    border-radius: 6px;
-    overflow: hidden;
-    color: #fff;
-    font-family: monospace; /* Tipografía tech/arcade */
-    border: 2px solid #fff; /* Borde fino de la tabla */
-    position: relative;
-    z-index: 5; /* Contenido sobre CRT */
-    
-    /* CRÍTICO: Fuerza a la tabla a no salirse del borde de la tarjeta */
-    table-layout: fixed; 
-}
-
-#results-table th, #results-table td {
-    padding: 12px;
+    box-shadow: 0 0 15px var(--secondary), 0 0 30px var(--primary), inset 0 0 15px var(--secondary), 10px 10px 0px rgba(0,0,0,0.5);
     text-align: center;
-    border-bottom: 1px solid rgba(255,255,255,0.15); /* Bordes de fila sutiles */
-    font-family: monospace;
-    
-    /* CRÍTICO: Si una palabra es muy larga (Esternocleidomastoideo), la corta al siguiente renglón */
-    word-wrap: break-word; 
-    overflow-wrap: break-word;
-}
-
-/* Cabecera Arcade */
-#results-table th {
-    background-color: #2d004d; /* Fondo cabecera */
-    color: #00ffff; /* Texto color Cyan Neón */
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-    border-bottom: 2px solid #fff;
-}
-
-#results-table td {
-    vertical-align: middle;
-}
-
-/* Texto de error (Votada como inválida) */
-.error-text {
-    color: #e74c3c !important; /* Rojo vivo */
-    font-weight: bold;
-    text-decoration: line-through;
-    text-shadow: 0 0 3px #fff; /* Brillo para resaltar sobre oscuro */
-}
-
-/* Botón del VAR (Themed Arcade) */
-#results-table td button {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    font-weight: bold;
-    border: 1px solid #fff;
-    border-radius: 6px;
-    cursor: pointer;
-    background-color: #bdc3c7; /* Color base */
-    color: #2c3e50;
-    box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
-    transition: all 0.2s ease;
-    width: auto;
-    margin-top: 0; /* Sin margen superior extra */
-}
-#results-table td button:active { transform: scale(0.96) translate(1px, 1px); box-shadow: 1px 1px 0px rgba(0,0,0,0.5); }
-#results-table td button:hover { opacity: 0.9; }
-
-/* Contenedor de scroll (Ya no es necesario deslizar, pero por compatibilidad) */
-.table-scroll-wrapper {
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-/* Controles de fin de ronda ( Stackable on mobile) */
-.end-round-stackable-controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 25px;
-}
-
-/* --- MODAL DE DEBATE Y TABLAS (THEMED ARCADE) --- */
-#modal-debate, #modal-tablas {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Fondo modal oscurísimo */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-}
-
-.modal-content {
-    background-color: #1a012d; /* Fondo Oscuro Arcade */
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease; 
+    z-index: 10;
     border: 6px solid #fff;
-    border-radius: 10px;
-    box-shadow: 0 0 15px #ff00ff, 0 0 30px #00ffff;
-    padding: 25px;
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+    backdrop-filter: blur(2px);
 }
 
-/* Efecto CRT sobre modales */
-.modal-content::after {
+/* Efecto CRT de la carcasa */
+#game-container::after {
     content: "";
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -366,276 +118,159 @@ button:hover { opacity: 0.9; }
     border-radius: 4px;
     z-index: 2;
 }
-.modal-content * { position: relative; z-index: 5; } /* Contenido sobre CRT */
-
-.modal-content h2, .modal-content p, .modal-content label {
-    color: #00ffff; /* Texto Cyan Neón */
-    text-shadow: 0 0 8px #00ffff;
-    font-family: 'Courier New', Courier, monospace;
-}
-
-/* Textarea de debate Arcade */
-#argumento-debate {
-    width: 100%;
-    height: 80px;
-    margin: 15px 0;
-    padding: 10px;
-    font-family: monospace;
-    color: #fff;
-    background: #2d004d;
-    border: 2px solid #ff00ff; /* Borde Magenta */
-    border-radius: 8px;
-    box-shadow: 0 0 5px #ff00ff;
-    resize: none;
-    outline: none;
-}
-#argumento-debate:focus { box-shadow: 0 0 10px #00ffff; border-color: #00ffff; }
-
-
-/* ========================================================
-   CRÍTICO: RESPONSIVE MOBILE FIXES FOR ARCADE THEME
-   ======================================================== */
-@media (max-width: 600px) {
-    /*results Area mobile fixes*/
-    #results-area h2 { font-size: 1.5rem; }
-    #results-area #results-content {
-        padding: 15px; /* Reducimos el colchón interior */
-        border-width: 4px; /* Bordes un poco más finos en mobile */
-    }
-    
-    /* Achicamos el texto de la tabla para que entre mejor */
-    #results-table th, #results-table td { 
-        padding: 6px 2px; /* Reducimos el relleno drásticamente */
-        font-size: 0.75rem; 
-    }
-    #results-table th { 
-        font-size: 0.65rem; 
-        letter-spacing: 0px;
-        padding: 8px 2px;
-    }
-
-    /* Achicamos un poquito el botón del VAR en mobile */
-    #results-table td button { 
-        padding: 4px; 
-        font-size: 0.7rem; 
-        width: 100%; 
-        margin: 0;
-        border-width: 1px;
-    }
-
-    /* CRÍTICO: Repartimos el ancho total (100%) entre las 5 columnas en porcentajes estrictos */
-    #results-table th:nth-child(1) { width: 25%; } /* Cat. */
-    #results-table th:nth-child(2) { width: 22%; } /* Tú */
-    #results-table th:nth-child(3) { width: 22%; } /* Rival */
-    #results-table th:nth-child(4) { width: 13%; } /* Pts */
-    #results-table th:nth-child(5) { width: 18%; } /* Botón VAR */
-
-    /* Controles de fin de ronda STACKABLE on mobile */
-    .end-round-stackable-controls { 
-        flex-direction: column; 
-        gap: 8px; 
-        width: 100%; 
-        margin-top: 20px;
-    }
-    .end-round-stackable-controls button {
-        padding: 10px;
-        font-size: 0.9rem;
-    }
-
-    /* Modales en mobile */
-    .modal-content {
-        padding: 15px;
-        border-width: 4px;
-    }
-    .modal-content h2 { font-size: 1.2rem; }
-    .modal-content p { font-size: 0.9rem; }
-    .modal-content .controls button {
-        padding: 8px 10px;
-        font-size: 0.8rem;
-    }
-}
-
-/* --- LÓGICA DE PANTALLA DE INICIO --- */
-#start-screen {
-    /* La tarjeta ahora se centra sola dentro de su contenedor (o el body si el contenedor no tiene padding) */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-}
-
-@keyframes gradientFluid {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* --- REDISEÑO ARCADE RETRO DE LA TARJETA DE INICIO --- */
-#start-screen .welcome-card {
-    position: relative;
-    z-index: 10;
-    width: 95%; /* Un poco más de margen en móviles */
-    max-width: 400px;
-    
-    /* Fondo Oscuro Arcade */
-    background-color: #1a012d; 
-    background-image: 
-        radial-gradient(#ff00ff 10%, transparent 10%), 
-        radial-gradient(#00ffff 10%, transparent 10%);
-    background-size: 30px 30px; 
-    background-position: 0 0, 15px 15px; 
-    
-    /* Bordes Neón */
-    border: 6px solid #fff;
-    border-radius: 10px; 
-    
-    /* Efecto Neón */
-    box-shadow: 
-        0 0 15px #ff00ff, 
-        0 0 30px #00ffff,
-        inset 0 0 15px #ff00ff,
-        10px 10px 0px rgba(0,0,0,0.5);
-        
-    backdrop-filter: blur(2px); 
-    padding: 30px; 
-    transition: transform 0.3s ease;
-}
-
-/* Efecto CRT */
-#start-screen .welcome-card::after {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.1),
-        rgba(0, 0, 0, 0.1) 2px,
-        transparent 2px,
-        transparent 4px
-    );
-    pointer-events: none; 
-    border-radius: 4px; 
-    z-index: 2; 
-}
-
-/* Ajustes de color dentro de la tarjeta arcade */
-#start-screen .welcome-card h2,
-#start-screen .welcome-card label {
-    color: #00ffff; 
-    text-shadow: 0 0 8px #00ffff;
-    font-family: 'Courier New', Courier, monospace; 
-}
-
-#start-screen .welcome-card p,
-#start-screen .welcome-card .empty-msg {
-    color: #ff00ff !important; 
-    text-shadow: 0 0 5px #ff00ff;
-}
-
-/* Inputs Arcade */
-#start-screen .welcome-card input,
-#start-screen .welcome-card select,
-#start-screen .welcome-card textarea {
-    background: #2d004d;
-    color: #fff;
-    border: 2px solid #ff00ff; 
-    box-shadow: 0 0 5px #ff00ff;
-    font-family: monospace;
-    width: 100%;
-    margin-top: 5px;
-}
+#game-container > * { position: relative; z-index: 5; }
 
 /* Botones Arcade */
-#start-screen .welcome-card button {
-    border: 2px solid #fff; 
-    text-transform: uppercase;
-    font-weight: bold;
-    box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
-    transition: all 0.2s ease;
-    width: 100%;
-    margin-top: 10px;
-    color: white; 
-    position: relative; /* Asegura que el texto y clics queden sobre el efecto CRT */
-    z-index: 5;
-}
-
-#start-screen .welcome-card button:hover {
-    transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0px rgba(0,0,0,0.5);
-}
-
-/* --- ANIMACIONES GENERALES --- */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Estilos para el Lobby (Botones de unirse) */
-.lobby-controls { 
-    margin-top: 20px; 
-    padding-top: 20px; 
-    border-top: 1px solid rgba(255, 255, 255, 0.2); 
-    position: relative;
-    z-index: 5;
-}
-.rooms-container { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
-    max-height: 150px; 
-    overflow-y: auto; 
-    scrollbar-width: thin;
-    scrollbar-color: #ff00ff #2d004d;
-}
-
-.rooms-container::-webkit-scrollbar { width: 8px; }
-.rooms-container::-webkit-scrollbar-track { background: #2d004d; }
-.rooms-container::-webkit-scrollbar-thumb { background-color: #ff00ff; border-radius: 4px; }
-
-/* --- ESTILOS DEL NUEVO LOGO ARCADE --- */
-.logo-container {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative; /* Asegura que no quede bajo el efecto CRT si el index es menor */
-    z-index: 5;
-}
-
-.arcade-logo {
-    max-width: 250px; 
-    height: auto;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5)); 
-    animation: arcadePulse 2s ease-in-out infinite;
-}
-
-@keyframes arcadePulse {
-    0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3)); }
-    50% { transform: scale(1.03); filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.6)); }
-    100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3)); }
-}
-
-/* Pantalla de espera hereda estilos de la tarjeta arcade */
-#waiting-screen .welcome-card {
-    /* Mismos estilos base que la tarjeta de inicio, pero centrado si es necesario */
-    background-color: #1a012d; 
-    border: 6px solid #fff;
-    border-radius: 10px; 
-    box-shadow: 0 0 15px #ff00ff, 0 0 30px #00ffff, inset 0 0 15px #ff00ff;
-    padding: 30px;
-}
-#waiting-screen h2, #waiting-screen p {
-     color: #00ffff;
-     text-shadow: 0 0 8px #00ffff;
-}
-/* --- INDICADOR DE VERSIÓN --- */
-.game-version {
-    text-align: right;
-    font-size: 0.7rem;
-    color: rgba(0, 255, 255, 0.4) !important; /* Cyan transparente */
-    margin: 15px 0 -10px 0;
+button {
+    padding: 12px 24px;
+    font-size: 1rem;
     font-family: monospace;
-    text-shadow: none !important;
-    pointer-events: none; /* Para que no interfiera si le hacen clic encima */
+    text-transform: uppercase;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.1s, opacity 0.2s, box-shadow 0.2s;
+    box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
+    color: white;
+}
+button:active { transform: scale(0.96) translate(1px, 1px); box-shadow: 1px 1px 0px rgba(0,0,0,0.5); }
+button:hover { opacity: 0.9; }
+
+.btn-success { background-color: var(--secondary); border-color: #fff; } /* Magenta */
+.danger { background-color: var(--danger); }
+.secondary { background-color: #bdc3c7; color: #1a012d; }
+
+/* Inputs Arcade */
+input[type="text"], textarea, select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-family: monospace;
+    background: #2d004d;
+    color: #fff;
+    border: 2px solid var(--secondary);
+    border-radius: 8px;
+    outline: none;
+    box-shadow: 0 0 5px var(--secondary);
+    transition: box-shadow 0.3s, border-color 0.3s;
+}
+input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* Nuevo Spinner Arcade (Cubo giratorio) */
+.spinner {
+    width: 40px; height: 40px;
+    background-color: var(--primary);
+    margin: 20px auto;
+    animation: arcadeSpin 1.2s infinite ease-in-out;
+    box-shadow: 0 0 10px var(--primary);
+}
+@keyframes arcadeSpin {
+    0% { transform: perspective(120px) rotateX(0deg) rotateY(0deg); background-color: var(--primary); box-shadow: 0 0 10px var(--primary);}
+    50% { transform: perspective(120px) rotateX(-180.1deg) rotateY(0deg); background-color: var(--secondary); box-shadow: 0 0 10px var(--secondary);}
+    100% { transform: perspective(120px) rotateX(-180deg) rotateY(-179.9deg); background-color: var(--primary); box-shadow: 0 0 10px var(--primary);}
+}
+
+/* ========================================================
+   4. PANTALLAS ESPECÍFICAS
+   ======================================================== */
+
+/* --- LOBBY Y WAITING SCREEN --- */
+#start-screen { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+
+.welcome-card {
+    position: relative; z-index: 10; width: 95%; max-width: 400px;
+    background-color: #1a012d; background-image: radial-gradient(#ff00ff 10%, transparent 10%), radial-gradient(#00ffff 10%, transparent 10%);
+    background-size: 30px 30px; background-position: 0 0, 15px 15px;
+    border: 6px solid #fff; border-radius: 10px; padding: 30px;
+    box-shadow: 0 0 15px #ff00ff, 0 0 30px #00ffff, inset 0 0 15px #ff00ff, 10px 10px 0px rgba(0,0,0,0.5);
+}
+
+.welcome-card::after {
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 2px, transparent 2px, transparent 4px);
+    pointer-events: none; border-radius: 4px; z-index: 2;
+}
+
+.welcome-card > * { position: relative; z-index: 5; }
+.welcome-card label { color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+.welcome-card p, .empty-msg { color: var(--secondary) !important; text-shadow: 0 0 5px var(--secondary); }
+
+/* Logo Animado */
+.logo-container { margin-bottom: 20px; display: flex; justify-content: center; }
+.arcade-logo { max-width: 250px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.5)); animation: arcadePulse 2s infinite; }
+@keyframes arcadePulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0,255,255,0.3)); }
+    50% { transform: scale(1.03); filter: drop-shadow(0 0 15px rgba(255,0,255,0.6)); }
+}
+
+.lobby-controls { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.2); }
+.rooms-container { display: flex; flex-direction: column; gap: 10px; max-height: 150px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--secondary) #2d004d; }
+.game-version { text-align: right; font-size: 0.7rem; color: rgba(0, 255, 255, 0.4) !important; margin: 15px 0 -10px 0; }
+
+#waiting-screen h2 { color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+/* --- COUNTDOWN --- */
+#challenge-msg { color: var(--secondary); text-shadow: 0 0 8px var(--secondary); }
+.big-number { font-size: 8rem; font-weight: bold; color: var(--primary); text-shadow: 0 0 20px var(--primary); margin: 20px 0; animation: numberPulse 1s infinite; }
+#letra-revelada { font-size: 8rem !important; color: var(--secondary) !important; text-shadow: 0 0 20px var(--secondary); margin: 20px 0; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+@keyframes numberPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+@keyframes popIn { 0% { transform: scale(0) rotate(-10deg); opacity: 0; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
+
+/* --- PLAY AREA --- */
+#current-letter-display { font-size: 5rem !important; color: var(--primary) !important; text-shadow: 0 0 15px var(--primary); margin: 10px 0 20px 0 !important; animation: floatLetter 3s ease-in-out infinite; }
+@keyframes floatLetter { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+#category-card { border: 2px dashed var(--secondary); padding: 25px; border-radius: 10px; margin-bottom: 20px; background-color: rgba(0, 0, 0, 0.4); box-shadow: inset 0 0 15px rgba(255, 0, 255, 0.2); }
+#category-name { font-size: 1.5rem; color: #fff; text-transform: uppercase; text-shadow: 2px 2px 0px rgba(0,0,0,0.8); margin-top: 0; }
+
+/* --- RESULTADOS Y VAR --- */
+#results-area h2 { color: var(--primary); text-shadow: 0 0 8px var(--primary); margin-top: 0;}
+#results-table { width: 100%; margin-top: 15px; border-collapse: collapse; border-radius: 6px; color: #fff; border: 2px solid #fff; table-layout: fixed; }
+#results-table th, #results-table td { padding: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); word-wrap: break-word; overflow-wrap: break-word; }
+#results-table th { background-color: #2d004d; color: var(--primary); text-transform: uppercase; border-bottom: 2px solid #fff; }
+.error-text { color: var(--danger) !important; font-weight: bold; text-decoration: line-through; text-shadow: 0 0 5px #000; }
+#results-table td button { padding: 5px; font-size: 0.75rem; margin: 0; width: 100%; }
+
+/* --- FINAL SCREEN --- */
+#winner-announcement { color: #f1c40f !important; text-shadow: 0 0 15px #f1c40f; font-size: 3rem !important;}
+#label-final-p1, #label-final-p2 { color: #fff; text-transform: uppercase; }
+#final-score-me { color: var(--primary) !important; text-shadow: 0 0 15px var(--primary); }
+#final-score-rival { color: var(--secondary) !important; text-shadow: 0 0 15px var(--secondary); }
+
+/* --- MODALES --- */
+#modal-debate, #modal-tablas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+.modal-content { background-color: var(--background); border: 6px solid #fff; border-radius: 10px; box-shadow: 0 0 15px var(--secondary), 0 0 30px var(--primary); padding: 25px; width: 90%; max-width: 400px; text-align: center; position: relative; overflow: hidden; }
+.modal-content::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1) 2px, transparent 2px, transparent 4px); pointer-events: none; z-index: 2; }
+.modal-content * { position: relative; z-index: 5; }
+.modal-content h2, .modal-content p { color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+/* ========================================================
+   5. RESPONSIVE MOBILE FIXES
+   ======================================================== */
+@media (max-width: 600px) {
+    #game-container { padding: 15px; border-width: 4px; border-radius: 8px;}
+    .arcade-logo { max-width: 200px; }
+    
+    #current-letter-display { font-size: 4rem !important; margin: 5px 0 10px 0 !important;}
+    #category-card { padding: 15px; }
+    #category-name { font-size: 1.2rem; }
+    
+    /* VAR Table Mobile */
+    #results-table th, #results-table td { padding: 6px 2px; font-size: 0.75rem; }
+    #results-table th { font-size: 0.65rem; }
+    #results-table th:nth-child(1) { width: 25%; }
+    #results-table th:nth-child(2) { width: 22%; }
+    #results-table th:nth-child(3) { width: 22%; }
+    #results-table th:nth-child(4) { width: 13%; }
+    #results-table th:nth-child(5) { width: 18%; }
+    
+    .end-round-controls { flex-direction: column; width: 100%; }
+    .modal-content { padding: 15px; border-width: 4px; }
+    .big-number, #letra-revelada { font-size: 6rem !important; }
 }
