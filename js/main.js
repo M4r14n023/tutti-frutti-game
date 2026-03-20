@@ -10,6 +10,14 @@ let yoGriteStop = false;
 // --- 1. GESTIÓN DE PANTALLAS ---
 function showScreen(screenId) {
     const allScreens = ['start-screen', 'waiting-screen', 'countdown-screen', 'play-area', 'results-area', 'final-screen'];
+    
+    // Magia para ocultar el cuadro blanco en el inicio
+    if (screenId === 'start-screen' || screenId === 'waiting-screen') {
+        document.body.classList.add('lobby-active');
+    } else {
+        document.body.classList.remove('lobby-active');
+    }
+
     allScreens.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');

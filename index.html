@@ -20,24 +20,29 @@
         <h1>Tutti Frutti</h1>
     </header>
 
-    <main id="game-container">
-    <section id="start-screen">
-            
-            <div class="floating-bg">
-                <span class="float-item word" style="--delay: 0s; --x: 10vw; --y: 80vh;">Manzana 🍎</span>
-                <span class="float-item points" style="--delay: 2s; --x: 85vw; --y: 20vh;">+20</span>
-                <span class="float-item icon" style="--delay: 1s; --x: 70vw; --y: 70vh;">🎮</span>
-                <span class="float-item word" style="--delay: 4s; --x: 15vw; --y: 15vh;">Elefante 🐘</span>
-                <span class="float-item points" style="--delay: 3s; --x: 50vw; --y: 85vh;">+10</span>
-                <span class="float-item icon" style="--delay: 5s; --x: 30vw; --y: 40vh;">🕹️</span>
-                <span class="float-item word" style="--delay: 2.5s; --x: 80vw; --y: 50vh;">Zanahoria 🥕</span>
-                <span class="float-item points" style="--delay: 6s; --x: 20vw; --y: 60vh;">-2</span>
-                <span class="float-item icon" style="--delay: 4.5s; --x: 60vw; --y: 10vh;">🎲</span>
-            </div>
+<div class="floating-bg">
+        <span class="float-item word" style="--delay: 0s; --x: 10vw; --y: 80vh;">Manzana 🍎</span>
+        <span class="float-item points" style="--delay: 2s; --x: 85vw; --y: 20vh;">+20</span>
+        <span class="float-item icon" style="--delay: 1s; --x: 70vw; --y: 70vh;">🎮</span>
+        <span class="float-item word" style="--delay: 4s; --x: 15vw; --y: 15vh;">Elefante 🐘</span>
+        <span class="float-item points" style="--delay: 3s; --x: 50vw; --y: 85vh;">+10</span>
+        <span class="float-item icon" style="--delay: 5s; --x: 30vw; --y: 40vh;">🕹️</span>
+        <span class="float-item word" style="--delay: 2.5s; --x: 80vw; --y: 50vh;">Zanahoria 🥕</span>
+        <span class="float-item points" style="--delay: 6s; --x: 20vw; --y: 60vh;">-2</span>
+        <span class="float-item icon" style="--delay: 4.5s; --x: 60vw; --y: 10vh;">🎲</span>
+    </div>
 
+    <main id="game-container">
+        
+        <section id="start-screen">
             <div class="welcome-card">
-            <div class="logo-container">
+                
+                <div class="logo-container">
                     <img src="img/logo.png" alt="Tutti Frutti Arcade" class="arcade-logo">
+                </div>
+
+                <div class="settings-group">
+                    <input type="text" id="my-name" placeholder="Tu Nombre (Ej: Mariano)" autocomplete="off">
                 </div>
 
                 <div class="settings-group" style="margin-top: 15px;">
@@ -48,6 +53,7 @@
                         <option value="custom">Personalizado</option>
                     </select>
                 </div>
+                
                 <div id="custom-mazo-area" class="hidden">
                     <textarea id="custom-categories" placeholder="Nombres, Colores, Marcas..."></textarea>
                 </div>
@@ -104,9 +110,9 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 15px;">
-    <button id="btn-stop" class="danger" style="flex: 2;">¡TUTTI FRUTTI!</button>
-    <button id="btn-tablas" class="secondary" style="flex: 1;">🤝 Tablas</button>
-</div>
+                <button id="btn-stop" class="danger" style="flex: 2;">¡TUTTI FRUTTI!</button>
+                <button id="btn-tablas" class="secondary" style="flex: 1;">🤝 Tablas</button>
+            </div>
         </section>
 
         <section id="results-area" class="hidden">
@@ -122,7 +128,6 @@
                     </thead>
                     <tbody id="results-body"></tbody>
                 </table>
-                
                 <div class="end-round-controls" style="margin-top: 25px; display: flex; gap: 10px; justify-content: center;">
                     <button id="btn-next-round" class="btn-success">Siguiente Letra</button>
                     <button id="btn-end-game" class="secondary">Suma Final</button>

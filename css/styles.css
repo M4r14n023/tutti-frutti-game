@@ -11,12 +11,6 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    
-    /* Fondo vibrante que cambia de color y cubre toda la pantalla */
-    background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
-    background-size: 400% 400%;
-    animation: gradientFluid 12s ease infinite;
-    
     color: var(--text);
     display: flex;
     flex-direction: column;
@@ -25,7 +19,12 @@ body {
     margin: 0;
     padding: 20px;
     box-sizing: border-box;
-    min-height: 100vh; /* Ocupar toda la altura de la ventana */
+    min-height: 100vh;
+    
+    /* Fondo vibrante arcade en TODA la pantalla */
+    background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
+    background-size: 400% 400%;
+    animation: gradientFluid 12s ease infinite;
 }
 
 *, *:before, *:after {
@@ -33,6 +32,78 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* --- MAGIA DEL LOBBY (Ocultar contenedor blanco) --- */
+/* Cuando el lobby está activo, el recuadro blanco del juego desaparece */
+body.lobby-active #game-container {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    max-width: none;
+    overflow: visible; /* Permite que el contenido (como modales) no se corte */
+}
+
+/* --- ANIMACIONES FLOTANTES (Fondo completo) --- */
+.floating-bg {
+    position: fixed; /* Ocupar toda la ventana siempre */
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 0; /* Detrás del recuadro beige si está visible, pero encima del fondo de color */
+}
+
+.float-item {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    opacity: 0;
+    animation: floatUp 8s ease-in-out infinite;
+    animation-delay: var(--delay);
+    font-weight: bold;
+    user-select: none;
+    z-index: 1; 
+}
+
+.float-item.word { 
+    font-size: 1.8rem; 
+    color: #fff; 
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.4); 
+    font-family: 'Comic Sans MS', cursive, sans-serif; 
+}
+
+.float-item.points { 
+    font-size: 2.5rem; 
+    color: #f1c40f; 
+    text-shadow: 2px 2px 0px #d35400; 
+    font-family: monospace; 
+}
+
+.float-item.icon { 
+    font-size: 3.5rem; 
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0px) rotate(0deg) scale(0.8); opacity: 0; }
+    20% { opacity: 0.8; }
+    50% { transform: translateY(-75px) rotate(10deg) scale(1.1); }
+    80% { opacity: 0.8; }
+    100% { transform: translateY(-150px) rotate(-15deg) scale(0.8); opacity: 0; }
+}
+
+/* --- CONTENEDOR PRINCIPAL (Durante el juego) --- */
+#game-container {
+    width: 100%;
+    max-width: 550px;
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease; /* Transición suave al entrar/salir del lobby */
+    z-index: 10;
+}
 
 /* --- HEADER Y MARCADOR --- */
 header {
@@ -47,21 +118,6 @@ header {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     font-size: 1.2rem;
     display: inline-block;
-}
-
-/* --- CONTENEDOR PRINCIPAL --- */
-
-#game-container {
-    width: 100%;
-    max-width: 550px;
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    text-align: center;
-    position: relative; 
-    overflow: hidden; 
-    min-height: 600px; /* <--- ESTA LÍNEA EVITA QUE SE APLASTE */
 }
 
 /* --- ELEMENTOS DE JUEGO --- */
@@ -174,7 +230,7 @@ th {
     text-decoration: line-through;
 }
 
-/* --- MODAL DE DEBATE --- */
+/* --- MODAL DE DEBATE Y TABLAS --- */
 #modal-debate, #modal-tablas {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -206,37 +262,25 @@ th {
 
 /* --- LÓGICA DE PANTALLA DE INICIO --- */
 #start-screen {
-    position: absolute; 
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 10;
-    /* La animación y fondo se movieron al body */
+    /* La tarjeta ahora se centra sola dentro de su contenedor (o el body si el contenedor no tiene padding) */
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: inherit; 
-    overflow: hidden; /* Importante para contener las animaciones flotantes */
+    width: 100%;
+    height: 100%;
 }
 
-/* Animación del fondo */
 @keyframes gradientFluid {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-/* Contenedor de las burbujas */
-.floating-bg {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 0;
-}
-
 /* --- REDISEÑO ARCADE RETRO DE LA TARJETA DE INICIO --- */
 #start-screen .welcome-card {
     position: relative;
-    z-index: 1;
-    width: 90%;
+    z-index: 10;
+    width: 95%; /* Un poco más de margen en móviles */
     max-width: 400px;
     
     /* Fondo Oscuro Arcade */
@@ -259,7 +303,7 @@ th {
         10px 10px 0px rgba(0,0,0,0.5);
         
     backdrop-filter: blur(2px); 
-    padding: 30px; /* Reduje un poco el padding para que entre mejor */
+    padding: 30px; 
     transition: transform 0.3s ease;
 }
 
@@ -276,7 +320,7 @@ th {
         transparent 4px
     );
     pointer-events: none; 
-    border-radius: 4px; /* Un poco menos que el contenedor */
+    border-radius: 4px; 
     z-index: 2; 
 }
 
@@ -309,59 +353,21 @@ th {
 
 /* Botones Arcade */
 #start-screen .welcome-card button {
-    border: 2px solid #fff; /* Borde más fino para que no se vea tan tosco */
+    border: 2px solid #fff; 
     text-transform: uppercase;
     font-weight: bold;
     box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
     transition: all 0.2s ease;
     width: 100%;
     margin-top: 10px;
-    /* Aseguramos que tomen su color base y no se pongan blancos */
     color: white; 
+    position: relative; /* Asegura que el texto y clics queden sobre el efecto CRT */
+    z-index: 5;
 }
 
 #start-screen .welcome-card button:hover {
     transform: translate(2px, 2px);
     box-shadow: 1px 1px 0px rgba(0,0,0,0.5);
-}
-
-/* Estilos de los elementos flotantes */
-.float-item {
-    position: absolute;
-    left: var(--x);
-    top: var(--y);
-    opacity: 0;
-    animation: floatUp 8s ease-in-out infinite;
-    animation-delay: var(--delay);
-    font-weight: bold;
-    user-select: none;
-}
-
-.float-item.word { 
-    font-size: 1.8rem; 
-    color: #fff; 
-    text-shadow: 1px 1px 4px rgba(0,0,0,0.4); 
-    font-family: 'Comic Sans MS', cursive, sans-serif; 
-}
-
-.float-item.points { 
-    font-size: 2.5rem; 
-    color: #f1c40f; 
-    text-shadow: 2px 2px 0px #d35400; 
-    font-family: monospace; 
-}
-
-.float-item.icon { 
-    font-size: 3.5rem; 
-    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
-}
-
-@keyframes floatUp {
-    0% { transform: translateY(0px) rotate(0deg) scale(0.8); opacity: 0; }
-    20% { opacity: 0.8; }
-    50% { transform: translateY(-75px) rotate(10deg) scale(1.1); }
-    80% { opacity: 0.8; }
-    100% { transform: translateY(-150px) rotate(-15deg) scale(0.8); opacity: 0; }
 }
 
 /* --- ANIMACIONES GENERALES --- */
@@ -374,7 +380,9 @@ th {
 .lobby-controls { 
     margin-top: 20px; 
     padding-top: 20px; 
-    border-top: 1px solid rgba(255, 255, 255, 0.2); /* Línea divisoria más sutil */
+    border-top: 1px solid rgba(255, 255, 255, 0.2); 
+    position: relative;
+    z-index: 5;
 }
 .rooms-container { 
     display: flex; 
@@ -382,7 +390,6 @@ th {
     gap: 10px; 
     max-height: 150px; 
     overflow-y: auto; 
-    /* Estilo scrollbar para no romper el diseño arcade */
     scrollbar-width: thin;
     scrollbar-color: #ff00ff #2d004d;
 }
@@ -390,18 +397,21 @@ th {
 .rooms-container::-webkit-scrollbar { width: 8px; }
 .rooms-container::-webkit-scrollbar-track { background: #2d004d; }
 .rooms-container::-webkit-scrollbar-thumb { background-color: #ff00ff; border-radius: 4px; }
+
 /* --- ESTILOS DEL NUEVO LOGO ARCADE --- */
 .logo-container {
     margin-bottom: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative; /* Asegura que no quede bajo el efecto CRT si el index es menor */
+    z-index: 5;
 }
 
 .arcade-logo {
-    max-width: 250px; /* Tamaño del logo */
+    max-width: 250px; 
     height: auto;
-    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5)); /* Glow sutil cyan */
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5)); 
     animation: arcadePulse 2s ease-in-out infinite;
 }
 
@@ -409,4 +419,18 @@ th {
     0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3)); }
     50% { transform: scale(1.03); filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.6)); }
     100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3)); }
+}
+
+/* Pantalla de espera hereda estilos de la tarjeta arcade */
+#waiting-screen .welcome-card {
+    /* Mismos estilos base que la tarjeta de inicio, pero centrado si es necesario */
+    background-color: #1a012d; 
+    border: 6px solid #fff;
+    border-radius: 10px; 
+    box-shadow: 0 0 15px #ff00ff, 0 0 30px #00ffff, inset 0 0 15px #ff00ff;
+    padding: 30px;
+}
+#waiting-screen h2, #waiting-screen p {
+     color: #00ffff;
+     text-shadow: 0 0 8px #00ffff;
 }
