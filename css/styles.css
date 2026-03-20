@@ -629,3 +629,13 @@ button:hover { opacity: 0.9; }
      color: #00ffff;
      text-shadow: 0 0 8px #00ffff;
 }
+/* --- INDICADOR DE VERSIÓN --- */
+.game-version {
+    text-align: right;
+    font-size: 0.7rem;
+    color: rgba(0, 255, 255, 0.4) !important; /* Cyan transparente */
+    margin: 15px 0 -10px 0;
+    font-family: monospace;
+    text-shadow: none !important;
+    pointer-events: none; /* Para que no interfiera si le hacen clic encima */
+}

@@ -12,7 +12,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Tutti Frutti">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=1.0">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body class="lobby-active">
@@ -64,7 +64,10 @@
                         <p class="empty-msg">Buscando partidas abiertas...</p>
                     </div>
                 </div>
-            </div>
+                
+                <p class="game-version">v1.0</p>
+
+            </div> </section>
         </section>
 
         <section id="waiting-screen" class="hidden">
@@ -181,9 +184,9 @@
         const db = firebase.database();
     </script>
 
-    <script src="js/mazos.js"></script>
-    <script src="js/dictionary.js"></script>
-    <script src="js/gameLogic.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/mazos.js?v=1.0"></script>
+    <script src="js/dictionary.js?v=1.0"></script>
+    <script src="js/gameLogic.js?v=1.0"></script>
+    <script src="js/main.js?v=1.0"></script>
 </body>
 </html>
