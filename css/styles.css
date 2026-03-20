@@ -182,6 +182,81 @@ th {
     box-sizing: border-box;
 }
 
+/* --- ANIMACIONES DEL LOBBY DE BIENVENIDA --- */
+
+#start-screen {
+    position: relative;
+    overflow: hidden; /* Evita que la pantalla genere scroll si algo flota muy lejos */
+    /* Un fondo moderno y vibrante que cambia de color */
+    background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
+    background-size: 400% 400%;
+    animation: gradientFluid 12s ease infinite;
+}
+
+/* Animación del fondo */
+@keyframes gradientFluid {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Contenedor de las burbujas */
+.floating-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; /* CRUCIAL: Para que los clics traspasen a los botones reales */
+    z-index: 0;
+}
+
+/* La tarjeta principal se eleva un poco y se vuelve ligeramente transparente */
+#start-screen .welcome-card {
+    position: relative;
+    z-index: 1; 
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    backdrop-filter: blur(5px);
+}
+
+/* Estilos de los elementos flotantes */
+.float-item {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    opacity: 0;
+    /* La animación dura 8s, sube, y vuelve a empezar gracias al delay */
+    animation: floatUp 8s ease-in-out infinite;
+    animation-delay: var(--delay);
+    font-weight: bold;
+    user-select: none;
+}
+
+.float-item.word { 
+    font-size: 1.8rem; 
+    color: #fff; 
+    text-shadow: 1px 1px 4px rgba(0,0,0,0.4); 
+    font-family: 'Comic Sans MS', cursive, sans-serif; /* Un toque más lúdico */
+}
+
+.float-item.points { 
+    font-size: 2.5rem; 
+    color: #f1c40f; 
+    text-shadow: 2px 2px 0px #d35400; 
+    font-family: monospace; 
+}
+
+.float-item.icon { 
+    font-size: 3.5rem; 
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.3));
+}
+
+/* El movimiento: Sube 150px, gira un poco, y se desvanece */
+@keyframes floatUp {
+    0% { transform: translateY(0px) rotate(0deg) scale(0.8); opacity: 0; }
+    20% { opacity: 0.8; }
+    50% { transform: translateY(-75px) rotate(10deg) scale(1.1); }
+    80% { opacity: 0.8; }
+    100% { transform: translateY(-150px) rotate(-15deg) scale(0.8); opacity: 0; }
+}
 /* --- ANIMACIONES --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
