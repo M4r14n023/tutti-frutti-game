@@ -5,14 +5,14 @@ let myRole = null;
 let myName = "";
 let rivalName = "";
 let puntosSumadosEnEstaRonda = false; 
-let yoGriteStop = false; 
+let yoGriteStop = false; // Para saber quién cortó el juego
 
-// --- 1. GESTIÓN DE PANTALLAS ---
+// --- 1. GESTIÓN DE PANTALLAS (Actualizada para el modo Arcade) ---
 function showScreen(screenId) {
     const allScreens = ['start-screen', 'waiting-screen', 'countdown-screen', 'play-area', 'results-area', 'final-screen'];
     
-    // Magia para ocultar el cuadro blanco en el inicio
-    if (screenId === 'start-screen' || screenId === 'waiting-screen') {
+    // Si mostramos la pantalla de inicio, activamos el modo lobby arcade en el body
+    if (screenId === 'start-screen') {
         document.body.classList.add('lobby-active');
     } else {
         document.body.classList.remove('lobby-active');
@@ -55,11 +55,12 @@ document.getElementById('mazo-select').addEventListener('change', (e) => {
     document.getElementById('custom-mazo-area').classList.toggle('hidden', e.target.value !== 'custom');
 });
 
+// Función para limpiar caracteres prohibidos en Firebase
 function limpiarMazo(mazoArray) {
     return mazoArray.map(cat => cat.replace(/[.#$/\[\]]/g, '-'));
 }
 
-// CREAR SALA (HOST) - ARRANQUE AUTOMÁTICO AL UNIRSE
+// CREAR SALA (HOST) - LÓGICA AUTOMÁTICA 1VS1 PRESERVADA
 document.getElementById('btn-create-room').addEventListener('click', () => {
     myName = document.getElementById('my-name').value.trim();
     if (!myName) { alert("Pon tu nombre primero."); return; }
@@ -70,6 +71,7 @@ document.getElementById('btn-create-room').addEventListener('click', () => {
     const selectMazo = document.getElementById('mazo-select').value;
     let mazoElegido = selectMazo === 'custom' ? document.getElementById('custom-categories').value.split(',').map(c => c.trim()) : mazosPredefinidos[selectMazo];
     
+    // FIX BUG 1: Limpiamos los nombres de las categorías antes de usarlos
     mazoActual = limpiarMazo(mazoElegido);
 
     db.ref(`salas/${roomCode}`).set({
@@ -109,7 +111,7 @@ function unirseSala(codigo, hostNombre) {
 
     db.ref(`salas/${roomCode}`).update({ guestName: myName });
     db.ref(`salas/${roomCode}/config`).once('value', (snap) => {
-        mazoActual = snap.val().mazo; 
+        mazoActual = snap.val().mazo; // El mazo ya viene limpio del Host
     });
 
     escucharEstadoJuego(); 
@@ -177,6 +179,7 @@ function iniciarAnimacionCountdown(letra) {
     sumarPuntosSeguros(); 
     yoGriteStop = false; 
 
+    // Solo actualizamos los nombres en la tabla del VAR, ignoramos el header
     document.getElementById('th-p1').innerText = myName;
     document.getElementById('th-p2').innerText = rivalName;
 
@@ -214,6 +217,7 @@ function prepararRondaLocal() {
     indiceCategoriaActual = 0;
     respuestasJugador = {};
     
+    // Habilitar botones por si venimos de un tiempo de gracia previo
     document.getElementById('btn-next').disabled = false;
     document.getElementById('btn-skip').disabled = false;
     document.getElementById('user-input').style.borderColor = "#ddd";
@@ -229,13 +233,13 @@ function guardarRespuestaActual() {
     if (catNombre) {
         respuestasJugador[catNombre] = input.value.trim();
     }
+    // Ya no borramos el input a la fuerza aquí. De eso se encarga la interfaz.
 }
 
 function estanTodasCompletas() {
+    // Revisa si en cada categoría del mazo hay una palabra escrita
     for (let cat of mazoActual) {
-        const resp = respuestasJugador[cat] || "";
-        // Si no existe o tiene menos de 3 letras, no está completa
-        if (resp.trim().length < 3) {
+        if (!respuestasJugador[cat] || respuestasJugador[cat].trim() === "") {
             return false;
         }
     }
@@ -243,13 +247,12 @@ function estanTodasCompletas() {
 }
 
 function irAProximaCategoriaVacia() {
+    // Busca de forma circular la próxima categoría que esté en blanco
     for (let i = 1; i <= mazoActual.length; i++) {
         let nextIndex = (indiceCategoriaActual + i) % mazoActual.length;
         let catNombre = mazoActual[nextIndex];
         
-        const resp = respuestasJugador[catNombre] || "";
-        // Si la categoría tiene menos de 3 letras, salta hacia ella
-        if (resp.trim().length < 3) {
+        if (!respuestasJugador[catNombre] || respuestasJugador[catNombre].trim() === "") {
             indiceCategoriaActual = nextIndex;
             actualizarInterfazCategoria();
             return;
@@ -261,9 +264,11 @@ document.getElementById('btn-next').addEventListener('click', () => {
     guardarRespuestaActual();
     
     if (estanTodasCompletas()) {
+        // Si ya está todo lleno, "Siguiente" funciona como "Tutti Frutti"
         yoGriteStop = true;
         db.ref(`salas/${roomCode}/actual/estado`).set('stop');
     } else {
+        // Si faltan, salta a la primera que encuentre vacía
         irAProximaCategoriaVacia();
     }
 });
@@ -278,11 +283,13 @@ function actualizarInterfazCategoria() {
     document.getElementById('category-name').innerText = catNombre;
     
     const input = document.getElementById('user-input');
+    // Si ya habías escrito algo en esta categoría (y pegaste la vuelta), te lo muestra.
+    // Si está vacía, la deja en blanco.
     input.value = respuestasJugador[catNombre] || ""; 
     input.focus();
 }
 
-// --- 5. VAR, STOP Y TIEMPO DE GRACIA ---
+// --- 5. VAR, STOP Y TIEMPO DE GRACIA (Crítico Mobile Fix y preservado) ---
 document.getElementById('btn-stop').addEventListener('click', () => {
     guardarRespuestaActual(); 
     
@@ -295,9 +302,34 @@ document.getElementById('btn-stop').addEventListener('click', () => {
     }
 });
 
+// NUEVO: Botón de escape para las letras imposibles (Rendirse -> Tablas)
+document.getElementById('btn-tablas').addEventListener('click', () => {
+    guardarRespuestaActual(); 
+    db.ref(`salas/${roomCode}/actual`).update({
+        estado: 'tablas',
+        propuestoPor: myRole
+    });
+});
+
+// Nota: Estas 3 funciones deben llamarse desde el HTML (onclick="cancelarTablas()", etc.)
+window.cancelarTablas = function() {
+    db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
+};
+
+window.rechazarTablas = function() {
+    db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
+    db.ref(`salas/${roomCode}/actual/rechazo`).set(Date.now()); 
+};
+
+window.aceptarTablas = function() {
+    yoGriteStop = true; 
+    db.ref(`salas/${roomCode}/actual`).update({ estado: 'stop' });
+};
+
 function manejarCorteDeRonda() {
     const inputActual = document.getElementById('user-input').value.trim();
     
+    // Si NO fui yo quien gritó stop, y tengo al menos 2 letras escritas, doy tiempo de gracia
     if (!yoGriteStop && inputActual.length >= 2) {
         document.getElementById('category-name').innerText = "¡TIEMPO! 3 segundos...";
         document.getElementById('category-name').style.color = "red";
@@ -337,31 +369,7 @@ async function finalizarYMostrarVAR() {
     });
 }
 
-// --- 6. TABLAS (EMPATE) ---
-document.getElementById('btn-tablas').addEventListener('click', () => {
-    guardarRespuestaActual(); 
-    db.ref(`salas/${roomCode}/actual`).update({
-        estado: 'tablas',
-        propuestoPor: myRole
-    });
-});
-
-// Nota: Estas 3 funciones deben llamarse desde el HTML (onclick="cancelarTablas()", etc.)
-window.cancelarTablas = function() {
-    db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
-};
-
-window.rechazarTablas = function() {
-    db.ref(`salas/${roomCode}/actual`).update({ estado: 'jugando' });
-    db.ref(`salas/${roomCode}/actual/rechazo`).set(Date.now()); 
-};
-
-window.aceptarTablas = function() {
-    yoGriteStop = true; 
-    db.ref(`salas/${roomCode}/actual`).update({ estado: 'stop' });
-};
-
-// --- 7. SUMA DE PUNTOS Y FINALIZACIÓN ---
+// --- 6. SUMA DE PUNTOS Y CONTINUACIÓN ---
 function sumarPuntosSeguros() {
     if (puntosSumadosEnEstaRonda) return; 
     
@@ -373,6 +381,7 @@ function sumarPuntosSeguros() {
     });
 
     scoreP1 += totalRonda; 
+    document.getElementById('score-p1').innerText = scoreP1;
     puntosSumadosEnEstaRonda = true;
 }
 
