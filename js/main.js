@@ -6,6 +6,8 @@ let myName = "";
 let rivalName = "";
 let puntosSumadosEnEstaRonda = false; 
 let yoGriteStop = false; 
+// Eliminamos el 'let' de scoreP1 porque ya está en gameLogic.js
+scoreP1 = 0;
 
 // --- 1. GESTIÓN DE PANTALLAS ---
 function showScreen(screenId) {
