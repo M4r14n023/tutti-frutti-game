@@ -208,13 +208,92 @@ th {
     z-index: 0;
 }
 
-/* La tarjeta principal se eleva un poco y se vuelve ligeramente transparente */
+/* --- REDISEÑO ARCADE RETRO DE LA TARJETA DE INICIO --- */
+
 #start-screen .welcome-card {
     position: relative;
-    z-index: 1; 
-    background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-    backdrop-filter: blur(5px);
+    z-index: 1;
+    
+    /* 1. Fondo Oscuro Arcade con Patrón Geométrico Sutil (Píxeles/Puntos) */
+    background-color: #1a012d; /* Morado muy oscuro de fondo */
+    background-image: 
+        radial-gradient(#ff00ff 10%, transparent 10%), /* Puntos Magenta */
+        radial-gradient(#00ffff 10%, transparent 10%); /* Puntos Cyan */
+    background-size: 30px 30px; /* Tamaño del patrón */
+    background-position: 0 0, 15px 15px; /* Desfase para que parezcan píxeles */
+    
+    /* 2. Bordes Neón con Grosor Estilo 80s */
+    border: 6px solid #fff;
+    border-radius: 10px; /* Bordes menos redondeados, más blocky */
+    
+    /* 3. El Efecto Neón: Sombreado múltiple Magenta y Cyan */
+    box-shadow: 
+        /* Neón exterior */
+        0 0 15px #ff00ff, 
+        0 0 30px #00ffff,
+        /* Neón interior que da profundidad */
+        inset 0 0 15px #ff00ff,
+        /* Sombra dura arcade */
+        10px 10px 0px rgba(0,0,0,0.5);
+        
+    backdrop-filter: blur(2px); /* Un toque de blur para integrar con el fondo fluido */
+    padding: 40px;
+    transition: transform 0.3s ease;
+}
+
+/* 4. Efecto CRT: Líneas de escaneo sutiles sobre toda la tarjeta */
+#start-screen .welcome-card::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    /* Gradiente lineal repetitivo para las líneas */
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.1) 2px,
+        transparent 2px,
+        transparent 4px
+    );
+    pointer-events: none; /* No interfiere con los clics */
+    border-radius: 10px;
+    z-index: 2; /* Sobre el contenido, pero bajo los elementos flotantes */
+}
+
+/* 5. Ajustar colores de texto e inputs para que resalten sobre el fondo oscuro */
+#start-screen .welcome-card h2,
+#start-screen .welcome-card label {
+    color: #00ffff; /* Texto color Cyan Neón */
+    text-shadow: 0 0 8px #00ffff;
+    font-family: 'Courier New', Courier, monospace; /* Tipografía más 'tech' */
+}
+
+#start-screen .welcome-card p {
+    color: #ff00ff; /* Texto color Magenta Neón */
+    text-shadow: 0 0 5px #ff00ff;
+}
+
+/* Ajuste de inputs para que parezcan de terminal retro */
+#start-screen .welcome-card input,
+#start-screen .welcome-card select {
+    background: #2d004d;
+    color: #fff;
+    border: 2px solid #ff00ff; /* Borde Magenta */
+    box-shadow: 0 0 5px #ff00ff;
+    font-family: monospace;
+}
+
+/* Estilo para los botones dentro de la tarjeta para que sean más 'chunky' 80s */
+#start-screen .welcome-card button {
+    border: 4px solid #fff;
+    text-transform: uppercase;
+    font-weight: bold;
+    box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
+    transition: all 0.2s ease;
+}
+
+#start-screen .welcome-card button:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
 }
 
 /* Estilos de los elementos flotantes */
