@@ -129,12 +129,15 @@
 
     <div id="modal-debate" class="hidden">
         <div class="modal-content">
-            <h2 id="debate-title">⚖️ Tribunal</h2>
-            <p>Palabra: <b id="disputed-word">---</b></p>
-            <textarea id="argumento-debate" placeholder="Argumento..."></textarea>
-            <div class="controls">
-                <button onclick="cerrarDebate('valida')" class="btn-success">Válida</button>
-                <button onclick="cerrarDebate('invalida')" class="danger">Inventada</button>
+            <h2 id="debate-title">⚖️ Tribunal de Honor</h2>
+            <p>Ajuste manual de puntos para esta categoría:</p>
+            <div class="controls" style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                <button onclick="cerrarDebate(20)" class="btn-success">La del rival NO EXISTE (Mis 20 pts)</button>
+                <button onclick="cerrarDebate(10)" class="btn-success">Ambas distintas y válidas (10 pts)</button>
+                <button onclick="cerrarDebate(5)" class="secondary">Pusimos la misma palabra (5 pts)</button>
+                <button onclick="cerrarDebate(0)" class="secondary">Mi palabra es inválida (0 pts)</button>
+                <button onclick="cerrarDebate(-2)" class="danger">Mi palabra NO EXISTE (-2 pts)</button>
+                <button onclick="cerrarDebate('cancelar')" style="background: transparent; color: #7f8c8d; box-shadow: none; margin-top: 10px;">Cancelar</button>
             </div>
         </div>
     </div>

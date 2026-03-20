@@ -225,7 +225,9 @@ function guardarRespuestaActual() {
 
 function estanTodasCompletas() {
     for (let cat of mazoActual) {
-        if (!respuestasJugador[cat] || respuestasJugador[cat].trim() === "") {
+        const resp = respuestasJugador[cat] || "";
+        // Si no existe o tiene menos de 3 letras, no está completa
+        if (resp.trim().length < 3) {
             return false;
         }
     }
@@ -237,7 +239,9 @@ function irAProximaCategoriaVacia() {
         let nextIndex = (indiceCategoriaActual + i) % mazoActual.length;
         let catNombre = mazoActual[nextIndex];
         
-        if (!respuestasJugador[catNombre] || respuestasJugador[catNombre].trim() === "") {
+        const resp = respuestasJugador[catNombre] || "";
+        // Si la categoría tiene menos de 3 letras, salta hacia ella
+        if (resp.trim().length < 3) {
             indiceCategoriaActual = nextIndex;
             actualizarInterfazCategoria();
             return;

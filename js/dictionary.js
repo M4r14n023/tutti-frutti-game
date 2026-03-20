@@ -11,7 +11,6 @@ async function mostrarRevision(misRespuestas, respuestasRival) {
         const w1 = misRespuestas[cat] || "";
         const w2 = respuestasRival[cat] || "";
         
-        // Calculamos los puntos (5, 10, 20, -2, o 0)
         const pts = await procesarPuntosFinales(w1, w2);
         
         body.innerHTML += `
@@ -21,7 +20,7 @@ async function mostrarRevision(misRespuestas, respuestasRival) {
                 <td>${w2 || '-'}</td>
                 <td id="pts-${cat}"><b>${pts}</b></td>
                 <td>
-                    <button class="secondary" onclick="abrirDebate('${w1}', '${cat}')">⚖️ VAR</button>
+                    <button class="secondary" onclick="abrirDebate('${cat}')">⚖️ VAR</button>
                 </td>
             </tr>`;
     }
@@ -30,35 +29,34 @@ async function mostrarRevision(misRespuestas, respuestasRival) {
 /**
  * Abre el modal del tribunal.
  */
-function abrirDebate(palabra, cat) {
+function abrirDebate(cat) {
     window.categoriaEnDebate = cat;
-    document.getElementById('disputed-word').innerText = palabra || "(Vacío)";
-    
-    // Un título dinámico para meter presión
-    const nombreRival = typeof rivalName !== 'undefined' && rivalName ? rivalName : "Tu rival";
-    document.getElementById('debate-title').innerText = `⚖️ Tribunal: ¿${nombreRival} no te cree?`;
-    
     document.getElementById('modal-debate').classList.remove('hidden');
 }
 
 /**
- * Cierra el debate y aplica los puntos manualmente.
+ * Cierra el debate y aplica los puntos seleccionados manualmente.
  */
-function cerrarDebate(resultado) {
+function cerrarDebate(pts) {
+    if (pts === 'cancelar') {
+        document.getElementById('modal-debate').classList.add('hidden');
+        return;
+    }
+
     const categoria = window.categoriaEnDebate;
     const ptsElement = document.getElementById(`pts-${categoria}`);
 
-    if (resultado === 'valida') {
-        // Si la defiendes con éxito, te devuelve 10 puntos estándar
-        ptsElement.innerText = "10";
-        ptsElement.style.color = "#27ae60";
+    // Aplicar el nuevo puntaje
+    ptsElement.innerText = pts;
+
+    // Cambiar el color según si son puntos positivos, neutros o negativos
+    if (pts > 0) {
+        ptsElement.style.color = "#27ae60"; // Verde
+    } else if (pts < 0) {
+        ptsElement.style.color = "#e74c3c"; // Rojo
     } else {
-        // Si aceptas que es inventada o trampa, castigo
-        ptsElement.innerText = "-2";
-        ptsElement.style.color = "#e74c3c";
+        ptsElement.style.color = "#7f8c8d"; // Gris
     }
 
-    // Limpiamos y cerramos
-    document.getElementById('argumento-debate').value = "";
     document.getElementById('modal-debate').classList.add('hidden');
 }
