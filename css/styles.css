@@ -11,14 +11,21 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--background);
+    
+    /* Fondo vibrante que cambia de color y cubre toda la pantalla */
+    background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
+    background-size: 400% 400%;
+    animation: gradientFluid 12s ease infinite;
+    
     color: var(--text);
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* Centrar verticalmente */
     margin: 0;
     padding: 20px;
     box-sizing: border-box;
+    min-height: 100vh; /* Ocupar toda la altura de la ventana */
 }
 
 *, *:before, *:after {
@@ -197,18 +204,17 @@ th {
     resize: none;
 }
 
-/* --- ANIMACIONES DEL LOBBY DE BIENVENIDA --- */
+/* --- LÓGICA DE PANTALLA DE INICIO --- */
 #start-screen {
     position: absolute; 
     top: 0; left: 0; width: 100%; height: 100%;
     z-index: 10;
-    background: linear-gradient(135deg, #1abc9c, #2980b9, #8e44ad, #f39c12);
-    background-size: 400% 400%;
-    animation: gradientFluid 12s ease infinite;
+    /* La animación y fondo se movieron al body */
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: inherit; /* <--- Para que copie los bordes redondos del contenedor */
+    border-radius: inherit; 
+    overflow: hidden; /* Importante para contener las animaciones flotantes */
 }
 
 /* Animación del fondo */
@@ -384,3 +390,23 @@ th {
 .rooms-container::-webkit-scrollbar { width: 8px; }
 .rooms-container::-webkit-scrollbar-track { background: #2d004d; }
 .rooms-container::-webkit-scrollbar-thumb { background-color: #ff00ff; border-radius: 4px; }
+/* --- ESTILOS DEL NUEVO LOGO ARCADE --- */
+.logo-container {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.arcade-logo {
+    max-width: 250px; /* Tamaño del logo */
+    height: auto;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.5)); /* Glow sutil cyan */
+    animation: arcadePulse 2s ease-in-out infinite;
+}
+
+@keyframes arcadePulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3)); }
+    50% { transform: scale(1.03); filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.6)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.3)); }
+}
